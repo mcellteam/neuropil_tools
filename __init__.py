@@ -20,6 +20,7 @@
 import os
 import sys
 
+# Needed for Blender Addon System
 bl_info = {
     "name": "Neuropil Tools",
     "author": "Cailey Bromer, Tom Bartol",
@@ -30,13 +31,14 @@ bl_info = {
     "description": "Modeling Tools for Brain Neuropil",
     "warning": "",
     "wiki_url": "http://www.mcell.org",
-    "tracker_url": "http://code.google.com/p/cellblender/issues/list",
+    "tracker_url": "https://github.com/mcellteam/neuropil_tools/issues",
     "category": "Cell Modeling"
 }
 
 
-# To support reload properly, try to access a package var.
-# If it's there, reload everything
+# To support reregistration of Addon properly, try to access a package var,
+# and if it's there, reload everything
+# and if not, then do initial import
 if "bpy" in locals():
     print("Reloading Neuropil Tools")
     import imp
@@ -51,16 +53,27 @@ else:
 
 import bpy
 
+# Enable the Addon
 def register():
+
+    # register all of the components of the Addon
     bpy.utils.register_module(__name__)
+
+    # Extend the metadata of bpy.types.Object with our spine head metadata
     bpy.types.Object.spine_head_ana = bpy.props.PointerProperty(
         type=spine_head_analyzer.SpineHeadAnalyzerObjectProperty)
+
+    # Extend the metadata of bpy.types.Object with our connectivity metadata
     bpy.types.Object.connectivity = bpy.props.PointerProperty(
         type=connectivity_tool.ConnectivityToolObjectProperty)
+
     print("Neuropil Tools registered")
 
 
+
+# Disable the Addon
 def unregister():
+    # unregister all of the components of the Addon
     bpy.utils.unregister_module(__name__)
     print("Neuropil Tools unregistered")
 
