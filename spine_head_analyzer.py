@@ -36,6 +36,7 @@ import numpy as np
 import neuropil_tools
 import cellblender
 
+# register and unregister are required for Blender Addons
 # We use per module class registration/unregistration
 def register():
     bpy.utils.register_module(__name__)
@@ -189,6 +190,9 @@ class NEUROPIL_PT_SpineHeadAnalyzer(bpy.types.Panel):
 
 
 # Spine Head Analyzer Properties:
+
+
+# Properties of the PSDs:
 
 class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
     name = StringProperty(name="Spine PSD or AZ Name", default="")
