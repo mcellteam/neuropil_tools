@@ -118,6 +118,7 @@ class CONNECTIVITY_PT_ConnectivityTool(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_options = {'DEFAULT_CLOSED'}
+    bl_category = "Neuropil Tools"
 
     def draw(self, context):
         if context.object != None:
