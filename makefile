@@ -1,9 +1,9 @@
 
 # Linux:
-INSTALL_DIR = ~/.config/blender/2.76/scripts/addons/
+INSTALL_DIR = ~/.config/blender/2.77/
 
 # Mac:
-#INSTALL_DIR = ~/Library/Application\ Support/Blender/2.76/scripts/addons/
+#INSTALL_DIR = ~/Library/Application\ Support/Blender/2.76/
 
 SHELL = /bin/sh
 
@@ -31,7 +31,6 @@ clean:
 
 
 install: neuropil_tools.zip
-	@if [ "$(INSTALL_DIR)" ]; then \
-	  unzip -o neuropil_tools.zip -d $(INSTALL_DIR); \
-	fi
+	@ mkdir -p $(INSTALL_DIR)/scripts/addons
+	@ unzip -o neuropil_tools.zip -d $(INSTALL_DIR)/scripts/addons; \
 
