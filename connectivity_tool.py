@@ -19,7 +19,6 @@
 
 """
 This file contains the classes for Connectivity Tool
-
 """
 
 # blender imports
@@ -243,4 +242,3 @@ class ConnectivityToolObjectProperty(bpy.types.PropertyGroup):
             if psd_region_name != None:
                 row = layout.row()
                 row.operator("connectivity_tool.show_synaptic_partner", text="Show Synaptic Partner")
-

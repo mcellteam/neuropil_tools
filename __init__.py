@@ -19,6 +19,8 @@
 
 import os
 import sys
+from bpy_extras.io_utils import ImportHelper
+
 
 # Needed for Blender Addon System
 bl_info = {
@@ -42,12 +44,18 @@ bl_info = {
 if "bpy" in locals():
     print("Reloading Neuropil Tools")
     import imp
+    imp.reload(io_import_multiple_objs)
+    imp.reload(processor_tool)
     imp.reload(spine_head_analyzer)
     imp.reload(connectivity_tool)
+
+
 else:
     print("Importing Neuropil Tools")
     from . import \
-        spine_head_analyzer, \
+        io_import_multiple_objs, \
+        processor_tool, \
+	spine_head_analyzer, \
         connectivity_tool
 
 
@@ -60,12 +68,24 @@ def register():
     bpy.utils.register_module(__name__)
 
     # Extend the metadata of bpy.types.Object with our spine head metadata
+    bpy.types.Object.processor = bpy.props.PointerProperty(
+        type=processor_tool.ProcessorToolObjectProperty)
+
+    # Extend the metadata of bpy.types.Object with our spine head metadata
     bpy.types.Object.spine_head_ana = bpy.props.PointerProperty(
         type=spine_head_analyzer.SpineHeadAnalyzerObjectProperty)
 
     # Extend the metadata of bpy.types.Object with our connectivity metadata
     bpy.types.Object.connectivity = bpy.props.PointerProperty(
         type=connectivity_tool.ConnectivityToolObjectProperty)
+
+    # Extend the metadata of bpy.types.Scene with our Test Tool metadata
+    bpy.types.Scene.test_tool = bpy.props.PointerProperty(
+        type=processor_tool.ProcessorToolSceneProperty)
+
+    # Extend the metadata of bpy.types.Scene with our Test Tool metadata
+    #bpy.types.Scene.include = bpy.props.PointerProperty(
+    #    type=processor_tool.ContourIncludeSceneProperty)
 
     print("Neuropil Tools registered")
 
@@ -75,6 +95,20 @@ def register():
 def unregister():
     # unregister all of the components of the Addon
     bpy.utils.unregister_module(__name__)
+    #bpy.types.INFO_MT_file_import.remove(menu_func_import)
     print("Neuropil Tools unregistered")
+
+#def register():
+#    bpy.utils.register_class(ImportMultipleObjs)
+    
+
+
+#def unregister():
+#    bpy.utils.unregister_class(ImportMultipleObjs)
+    
+
+#if __name__ == "__main__":
+#    register()
+
 
 
