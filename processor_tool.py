@@ -668,7 +668,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         #obj = bpy.context.scene.objects[contour_name]
          #   obj != None:
                 if i.multi_component == True:
-                    print("Multiple Components:" + self.include_list[contour_name])
+                    print("Multiple Components: %s" % (str(self.include_list[contour_name])))
 
   
     def generate_mesh_object_single(self,context): 
@@ -726,7 +726,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         '''
 
         if self.include_list[contour_name].multi_component == True:
-            print("Multiple Components:" + self.include_list[contour_name])
+            print("Multiple Components: %s" % (str(self.include_list[contour_name])))
         return (obj)
 
 
