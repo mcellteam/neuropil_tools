@@ -772,6 +772,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
                 # Disable until we get volFixAll working
                 '''
+                '''
                 #fix mesh
                 fix_all_cmd = "volFixAll %s %s" % (out_file + '/' + name + "_tiles.rawc", out_file + '/'+ name + "_fix.rawc")  
                 subprocess.check_output([fix_all_cmd], shell=True)
@@ -783,7 +784,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 #import obj
                 bpy.ops.import_scene.obj(filepath=out_file + '/' + name  + ".obj", axis_forward='Y', axis_up="Z") 
                 self.include_list[name].generated = True
-                '''
 
             if os.path.isfile(out_file + '/'+ name + '_tiles.rawc'):
                 os.remove(out_file + '/'+ name + '_tiles.rawc')
@@ -816,6 +816,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
                     # Disable until we get volFixAll working
                     '''
+                    '''
                     #fix mesh
                     fix_all_cmd = "volFixAll %s %s" % (out_file + '/' + name + "_tiles.rawc", out_file + '/'+ name + "_fix.rawc")  
                     subprocess.check_output([fix_all_cmd], shell=True)
@@ -827,7 +828,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     #import obj
                     bpy.ops.import_scene.obj(filepath=out_file + '/' + name  + ".obj", axis_forward='Y', axis_up="Z") 
                     self.include_list[name].generated = True
-                    '''
 
                 #do some clean up
                 if os.path.isfile(out_file + '/'+ name + '_tiles.rawc'):

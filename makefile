@@ -1,13 +1,10 @@
 
-# Linux:
-INSTALL_DIR = ~/.config/blender/2.77/
-
-# Mac:
-#INSTALL_DIR = ~/Library/Application\ Support/Blender/2.76/
+INSTALL_DIR = ~/my_blender_addons_link
 
 SHELL = /bin/sh
 
-SOURCES = ./neuropil_tools/__init__.py ./neuropil_tools/spine_head_analyzer.py ./neuropil_tools/connectivity_tool.py
+SOURCES = ./neuropil_tools/__init__.py ./neuropil_tools/processor_tool.py ./neuropil_tools/spine_head_analyzer.py ./neuropil_tools/spine_head_analyzer_c.py ./neuropil_tools/spine_head_analyzer_sy.py ./neuropil_tools/connectivity_tool.py ./neuropil_tools/diameter_tool.py ./neuropil_tools/insert_mdl_region.py ./neuropil_tools/io_import_multiple_objs.py ./neuropil_tools/io_import_ser.py
+
 ZIPFILES = $(SOURCES)
 
 ZIPOPTS = -X -0 -D -o
@@ -31,6 +28,6 @@ clean:
 
 
 install: neuropil_tools.zip
-	@ mkdir -p $(INSTALL_DIR)/scripts/addons
-	@ unzip -o neuropil_tools.zip -d $(INSTALL_DIR)/scripts/addons; \
+	@ mkdir -p $(INSTALL_DIR)
+	@ unzip -o neuropil_tools.zip -d $(INSTALL_DIR); \
 
