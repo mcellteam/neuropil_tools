@@ -737,7 +737,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         ser_prefix = os.path.splitext(ser_file)[0]
         out_file = ser_dir + '/' + ser_prefix + "_output"
 
-        mesh_props = bpy.context.scene.mcell.meshalyzer
         if os.path.exists(out_file) == False:
             os.mkdir(out_file)
 
@@ -752,27 +751,25 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         if mode == "single":
             contour = self.include_list[self.active_include_index]
             contour_name  = contour.name
-            #obj = scn.objects.get(contour_name)
             bpy.ops.object.select_all(action='DESELECT')
             obj = scn.objects[contour_name]
             obj.select = True
             bpy.context.scene.objects.active = obj 
             bpy.ops.object.mode_set(mode = 'OBJECT')
             bpy.ops.mcell.meshalyzer()
+            mesh_props = bpy.context.scene.mcell.meshalyzer
             name = obj.name
             if mesh_props.components >1:           
                 print(obj.name)
                 self.include_list[name].multi_component = True
             if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'): 
+                print('\nFixing Single Flawed Mesh: %s\n' % (contour_name))
                 name = obj.name
                 m = obj.data
                 context.scene.objects.unlink(obj)
                 bpy.data.objects.remove(obj)
                 bpy.data.meshes.remove(m)  
 
-                # Disable until we get volFixAll working
-                '''
-                '''
                 #fix mesh
                 fix_all_cmd = "volFixAll %s %s" % (out_file + '/' + name + "_tiles.rawc", out_file + '/'+ name + "_fix.rawc")  
                 subprocess.check_output([fix_all_cmd], shell=True)
@@ -784,6 +781,19 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 #import obj
                 bpy.ops.import_scene.obj(filepath=out_file + '/' + name  + ".obj", axis_forward='Y', axis_up="Z") 
                 self.include_list[name].generated = True
+                bpy.ops.object.select_all(action='DESELECT')
+                obj = scn.objects[contour_name]
+                obj.select = True
+                bpy.context.scene.objects.active = obj 
+                bpy.ops.object.mode_set(mode = 'OBJECT')
+                bpy.ops.mcell.meshalyzer()
+                mesh_props = bpy.context.scene.mcell.meshalyzer
+                if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'):
+                    print('\nMesh Still Flawed: %s\n' % (contour_name))
+                    self.include_list[name].non_manifold = True
+                else:
+                    print('\nMesh Successfully Fixed: %s\n' % (contour_name))
+                    self.include_list[name].non_manifold = False
 
             if os.path.isfile(out_file + '/'+ name + '_tiles.rawc'):
                 os.remove(out_file + '/'+ name + '_tiles.rawc')
@@ -791,8 +801,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 os.remove(out_file + '/'+ name + '_fix.rawc')
             if os.path.isfile(out_file + '/'+ name + '.obj'):
                 os.remove(out_file + '/'+ name + '.obj')
-            if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'):
-                self.include_list[name].non_manifold = True
                       
         else: 
             for obj in scn.objects:
@@ -803,6 +811,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 bpy.context.scene.objects.active = obj 
                 bpy.ops.object.mode_set(mode = 'OBJECT')
                 bpy.ops.mcell.meshalyzer()
+                mesh_props = bpy.context.scene.mcell.meshalyzer
                 name = obj.name
                 if mesh_props.components >1:
                     print('\nFound Multi-component Mesh: %s\n' % (obj.name))
@@ -814,9 +823,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     bpy.data.objects.remove(obj)
                     bpy.data.meshes.remove(m)  
 
-                    # Disable until we get volFixAll working
-                    '''
-                    '''
                     #fix mesh
                     fix_all_cmd = "volFixAll %s %s" % (out_file + '/' + name + "_tiles.rawc", out_file + '/'+ name + "_fix.rawc")  
                     subprocess.check_output([fix_all_cmd], shell=True)
@@ -828,6 +834,19 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     #import obj
                     bpy.ops.import_scene.obj(filepath=out_file + '/' + name  + ".obj", axis_forward='Y', axis_up="Z") 
                     self.include_list[name].generated = True
+                    bpy.ops.object.select_all(action='DESELECT')
+                    obj = scn.objects[contour_name]
+                    obj.select = True
+                    bpy.context.scene.objects.active = obj 
+                    bpy.ops.object.mode_set(mode = 'OBJECT')
+                    bpy.ops.mcell.meshalyzer()
+                    mesh_props = bpy.context.scene.mcell.meshalyzer
+                    if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'):
+                        print('\nMesh Still Flawed: %s\n' % (contour_name))
+                        self.include_list[name].non_manifold = True
+                    else:
+                        print('\nMesh Successfully Fixed: %s\n' % (contour_name))
+                        self.include_list[name].non_manifold = False
 
                 #do some clean up
                 if os.path.isfile(out_file + '/'+ name + '_tiles.rawc'):
@@ -836,8 +855,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     os.remove(out_file + '/'+ name + '_fix.rawc')
                 if os.path.isfile(out_file + '/'+ name + '.obj'):
                     os.remove(out_file + '/'+ name + '.obj')
-                if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'):
-                    self.include_list[name].non_manifold = True
 
         #for i in range(int(self.min_section), int(self.max_section)+1):
         #    if os.path.isfile(out_file + '/'+ ser_prefix + '_interp.' + str(i)):
