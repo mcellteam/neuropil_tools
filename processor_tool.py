@@ -315,6 +315,8 @@ class Include_UL_draw_item(bpy.types.UIList):
         self.use_filter_sort_alpha = True    
         if item.non_manifold == True:
             layout.label(item.name, icon='ERROR')
+        elif item.multi_component == True:
+            layout.label(item.name, icon='NLA')
         elif item.generated == True:
 #scn.objects[scn.test_tool.include_list[str(item)] != None:
             layout.label(item.name, icon='MESH_ICOSPHERE')
@@ -760,7 +762,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             mesh_props = bpy.context.scene.mcell.meshalyzer
             name = obj.name
             if mesh_props.components >1:           
-                print(obj.name)
+                print('\nFound Multi-component Mesh: %s\n' % (obj.name))
                 self.include_list[name].multi_component = True
             if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'): 
                 print('\nFixing Single Flawed Mesh: %s\n' % (contour_name))
@@ -835,17 +837,17 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     bpy.ops.import_scene.obj(filepath=out_file + '/' + name  + ".obj", axis_forward='Y', axis_up="Z") 
                     self.include_list[name].generated = True
                     bpy.ops.object.select_all(action='DESELECT')
-                    obj = scn.objects[contour_name]
+                    obj = scn.objects[name]
                     obj.select = True
                     bpy.context.scene.objects.active = obj 
                     bpy.ops.object.mode_set(mode = 'OBJECT')
                     bpy.ops.mcell.meshalyzer()
                     mesh_props = bpy.context.scene.mcell.meshalyzer
                     if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'):
-                        print('\nMesh Still Flawed: %s\n' % (contour_name))
+                        print('\nMesh Still Flawed: %s\n' % (name))
                         self.include_list[name].non_manifold = True
                     else:
-                        print('\nMesh Successfully Fixed: %s\n' % (contour_name))
+                        print('\nMesh Successfully Fixed: %s\n' % (name))
                         self.include_list[name].non_manifold = False
 
                 #do some clean up
@@ -855,6 +857,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     os.remove(out_file + '/'+ name + '_fix.rawc')
                 if os.path.isfile(out_file + '/'+ name + '.obj'):
                     os.remove(out_file + '/'+ name + '.obj')
+
+        print("\nMulti-component meshes:\n")
+        for item in self.include_list:
+            if item.multi_component == True:
+                print(item.name) 
 
         #for i in range(int(self.min_section), int(self.max_section)+1):
         #    if os.path.isfile(out_file + '/'+ ser_prefix + '_interp.' + str(i)):
