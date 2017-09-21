@@ -26,7 +26,9 @@ This file contains the classes for Diameter Tool.
 import sys
 import subprocess
 import os
-#import re
+import difflib
+import re
+import itertools
 #import numpy
 
 # blender imports
@@ -61,6 +63,10 @@ def unregister():
 
 #Define operators
 
+#spine_trace_filter_name = ""
+
+#PSD_trace_filter_name= ""
+
 trace_filter_name = ""
 
 class NEUROPIL_OT_impser(bpy.types.Operator, ImportHelper):
@@ -83,6 +89,65 @@ class NEUROPIL_OT_impser(bpy.types.Operator, ImportHelper):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}       
+
+
+class NEUROPIL_OT_spine_namestruct(bpy.types.Operator):
+    bl_idname = "processor_tool.spine_namestruct"
+    bl_label = "Define Naming Pattern for Main Object"    
+    bl_description = "Define Naming Pattern for Main Object"    
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_options = {'UNDO'} 
+
+    spine_namestruct_name = StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
+  
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def execute(self, context):
+        context.scene.test_tool.spine_namestruct(context, self.spine_namestruct_name)
+        return {'FINISHED'}   
+
+
+class NEUROPIL_OT_psd_namestruct(bpy.types.Operator):
+    bl_idname = "processor_tool.psd_namestruct"
+    bl_label = "Define Naming Pattern for Meta Object"    
+    bl_description = "Define Naming Pattern for Meta Object"    
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_options = {'UNDO'} 
+
+    PSD_namestruct_name = StringProperty(name = "Name: ", description = "Assign PSD Name", default = "")
+  
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+   
+    def execute(self, context):
+        context.scene.test_tool.PSD_namestruct(context, self.PSD_namestruct_name)
+        return {'FINISHED'}   
+
+class NEUROPIL_OT_central_namestruct(bpy.types.Operator):
+    bl_idname = "processor_tool.central_namestruct"
+    bl_label = "Define Name for Central (shaft) Object"    
+    bl_description = "Define Name for Central (shaft) Object"    
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_options = {'UNDO'} 
+
+    central_namestruct_name = StringProperty(name = "Name: ", description = "Assign Central Object Name", default = "")
+  
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+   
+    def execute(self, context):
+        context.scene.test_tool.central_namestruct(context, self.central_namestruct_name)
+
+        return {'FINISHED'}   
+
+
 
 
 class NEUROPIL_OT_include_contour(bpy.types.Operator):
@@ -222,6 +287,8 @@ class NEUROPIL_OT_smooth_all(bpy.types.Operator):
     bl_label = "Smooth All"
     bl_description = "Smooth All"
     bl_options = {'REGISTER', 'UNDO'}
+  
+    spine_namestruct_name = StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
 
     def execute(self, context):
         context.scene.test_tool.smooth_all(context)
@@ -234,15 +301,30 @@ class NEUROPIL_OT_tag_psds(bpy.types.Operator):
     bl_description = "Assign PSD Region"
     bl_options = {'REGISTER', 'UNDO'}
 
+    spine_namestruct_name = StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
+
     def execute(self, context):
         context.scene.test_tool.tag_psds(context,"double")
         return {'FINISHED'}
 
 
+class NEUROPIL_OT_merge_objs(bpy.types.Operator):
+    bl_idname = "processor_tool.merge_objs"
+    bl_label = "Merge Objects"
+    bl_description = "Merge Objects"
+    bl_options = {'REGISTER', 'UNDO'}
+
+
+    def execute(self, context):
+        context.scene.test_tool.merge_objs(context)
+        return {'FINISHED'}
+
+
+
 class NEUROPIL_OT_tag_psd_single(bpy.types.Operator):
     bl_idname = "processor_tool.tag_psd_single"
-    bl_label = "Assign PSD Region"
-    bl_description = "Assign PSD Region"
+    bl_label = "Define Meta Region ('tag')"
+    bl_description = "Define Region ('tag')"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -282,7 +364,7 @@ class GAMER_OT_smooth(bpy.types.Operator):
         context.scene.gamer.mesh_improve_panel.smooth(context)
         return {'FINISHED'}
 
-
+ 
 class GAMER_OT_normal_smooth(bpy.types.Operator):
     bl_idname = "gamer.normal_smooth"
     bl_label = "Normal Smooth"
@@ -300,12 +382,14 @@ class Trace_UL_draw_item(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,
                  active_propname, index):
         global trace_filter_name
-
+       
         #self.filter_name = bpy.context.scene.test_tool.include_list.filter_name
+        #spine_trace_filter_name = self.spine_filter_name
         trace_filter_name = self.filter_name
         self.use_filter_sort_alpha = True
         layout.label(item.name)
- 
+
+
 
 class Include_UL_draw_item(bpy.types.UIList):
 
@@ -328,7 +412,9 @@ class Include_UL_draw_item(bpy.types.UIList):
 class SCN_UL_obj_draw_item(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
-        self.filter_name = "d[0-9][0-9]*sp" or "d[0-9][0-9]ax"
+        scn = bpy.context.scene
+        filt = scn.test_tool.spine_namestruct_name.replace('#','[0-9]')
+        self.filter_name = filt
         self.use_filter_sort_alpha = True
         if item.processor.newton == True:
             layout.label(item.name, icon='FILE_TICK')
@@ -349,6 +435,19 @@ class SCN_TestTool(bpy.types.Panel):
         if context.scene != None:
             context.scene.test_tool.draw_panel(context, panel=self)
 
+class SCN_TextEntry(bpy.types.Panel):
+    bl_label = "Test"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
+
+    def draw(self, context):
+        layout = self.layout
+        box1 = layout.box()
+        row = box1.row()
+        col = row.column(align = True)
+        col.operator("processor_tool.psd_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "")
+
 
 class ContourNameSceneProperty(bpy.types.PropertyGroup):
     name = StringProperty(name= "Contour name", default ="")
@@ -361,8 +460,10 @@ class IncludeNameSceneProperty(bpy.types.PropertyGroup):
     name = StringProperty(name= "Include name", default ="")
     generated = BoolProperty(name = "Mesh Object Generated", default = False)
     multi_component = BoolProperty(name = "Multiple Components in Mesh", default = False)
-    non_manifold = BoolProperty(name = "Non-manifold Mesh", default = False)
+    non_manifold = BoolProperty(name = "Non-manifold Mesh", default = False)       
     filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
+    spine_filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
+    PSD_filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
     problem = BoolProperty(name = "Problem Tagging", default = False)
     
     def init_include(self,context,name):
@@ -508,11 +609,36 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     active_include_index = IntProperty(name="Active Include Index", default=0)
     new = BoolProperty(name = "Imported MDL Object", default = False)
     filepath = StringProperty(name = "Remember Active Filepath", default= "")
+    spine_namestruct_name = StringProperty("Set object name structure", default = "d##sp##")          
+    PSD_namestruct_name = StringProperty("Set metadata name structure", default = "d##c##")
+    central_namestruct_name = StringProperty("Set central object name structure", default = "d##")
+    spine = StringProperty(name = "Differentiates Spine", default = "")
+    psd = StringProperty(name = "Differentiates PSD",default = "")
     min_section = StringProperty(name="Minimum Reconstruct Section File", default= "")
     max_section = StringProperty(name="Maximum Reconstruct Section File", default= "")
     section_thickness = StringProperty(name="Maximum Reconstruct Section File", default= "0.05")
+    #c_obj_name_list = CollectionProperty(name = "
 
     #contour_name = StringProperty(name="Contour Name", default = "")
+    
+    def spine_namestruct(self, context, spine_namestruct_name):
+        self.spine_namestruct_name = spine_namestruct_name
+
+    def PSD_namestruct(self, context, PSD_namestruct_name):
+        self.PSD_namestruct_name = PSD_namestruct_name
+        
+
+    def central_namestruct(self, context, central_namestruct_name):
+        self.central_namestruct_name = central_namestruct_name
+       
+       #for i in self.spine_namestruct:
+        #   if i == 'X':
+        #       i.= '[0-9]'
+
+       # print(self.spine_namestruct_name)
+       # print(spine_name)
+        #print(type(self.spine_namestruct_name))
+    
     
     def add_contour(self,context,contour_name,mode):
         """ Add a new PSD to psd_list """
@@ -567,9 +693,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
     def include_filter_contour(self,context):
         for item in self.contour_list:
-            if ((re.search(trace_filter_name + "[0-9][0-9]", item.name)) or (re.search(trace_filter_name + "[0-9][0-9][a-z]", item.name)))  and item.name not in self.include_list:
+            if ((re.search(trace_filter_name, item.name)) or (re.search(trace_filter_name, item.name)))  and item.name not in self.include_list:
                 self.add_contour(context, item.name, "include")
         return(self.include_list)
+
 
 
     def include_contour(self, context):
@@ -910,12 +1037,41 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         # for each sp associated with a group of cfa's
         
         # 5. for each cfa object:
-        
+
+
         scn = bpy.context.scene
-        obje_list = [obje.name for obje in self.include_list if re.fullmatch('d[0-9][0-9]*sp.*', obje.name) != None]
-        contact_list = [contact.name for contact in self.include_list if re.fullmatch('d[0-9][0-9]c.*', contact.name) != None]
-        print(obje_list)
-        print(len(obje_list))
+
+        obj1 = self.spine_namestruct_name
+        obj2 = self.PSD_namestruct_name
+
+
+        diff = difflib.ndiff(obj1, obj2)
+        d = list(diff)
+        #print(d)
+        predicate = '-'
+        filtered = list(itertools.filterfalse(lambda x: x[0] == predicate, d))
+ 
+        c_obj_name_list = []
+        c_obj_name = ''
+        for i in filtered:
+            #print(i[2])
+            #print(type(i))
+            c_obj_name_list.append(i[2])
+            c_obj_name += str(i[2])
+        #print('c obj_name:',c_obj_name)
+        #print('c_obj_name_list:', c_obj_name_list)
+
+        obj1 = self.spine_namestruct_name.replace('#','[0-9]')
+        obj2= self.PSD_namestruct_name.replace('#','[0-9]')
+        #print('obj:',obj2)
+
+        obje_list = [obje.name for obje in self.include_list if re.search(obj1, obje.name) != None]
+        print("obje_list:", obje_list)
+        contact_list = [contact.name for contact in self.include_list if re.search(obj2, contact.name) != None]
+        #print('spine_struct:', self.spine_namestruct_name)
+        #print(len(obje_list))
+    
+        
         
         if mode == "single":
             contour = scn.objects[self.active_sp_index]
@@ -923,7 +1079,45 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             contour_name  = contour.name
             sp_obj = scn.objects.get(contour_name)
             sp_obj_name = sp_obj.name
-            c_obj_name = sp_obj_name.replace('sp', 'c')
+
+            digits = difflib.ndiff(sp_obj_name, obj1.replace('[0-9]', '#'))
+            d = list(digits)
+            #print(d)
+            predicate = '-'
+            filter_digits = list(itertools.filterfalse(lambda x: x[0] != predicate, d))
+            #print("filter:", filter_digits)
+
+            replace = []
+            for i in filter_digits:
+                replace.append(str(i[2]))
+            print('replace:', replace) 
+
+            location = []
+            for i in c_obj_name:
+                location.append(i)
+            index = []
+            for position,char in enumerate(location):
+                if char == '#':
+                    index.append(position)
+            print('index:',index)  
+            
+
+            count = 0
+            for i in index:
+                c_obj_name_list[i] = replace[count]
+                count+=1
+            #print(c_obj_name_list)
+
+            c_obj_name = ''
+            for item in c_obj_name_list:
+                c_obj_name += item
+                
+  
+            
+            print('test:', len(c_obj_name))
+
+            print(sp_obj_name, c_obj_name)
+            print(type(sp_obj_name), type(c_obj_name))
             if (sp_obj != None) and (sp_obj.processor.smoothed == True) and (sp_obj.processor.newton == False) and (self.include_list[sp_obj.name].non_manifold == False):
             #INDENT THE FOLLOWING:    
                 sp_obj_file_name = cwd + '/' + sp_obj_name + ".obj"
@@ -959,6 +1153,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 bpy.ops.object.select_all(action='DESELECT')
                 #c_obj_name = obje.replace('sp', 'c')
                 c_obj = scn.objects.get(c_obj_name)
+                print("found c object: " + c_obj.name) 
                 if c_obj != None:
                     # now select and export the "c" object:
                     bpy.context.scene.objects.active = c_obj
@@ -975,125 +1170,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     obje.processor.smoothed = True
                     obje.processor.newton = True
 
-                elif scn.objects.get(c_obj_name + 'd') != None: 
-                    bpy.ops.object.select_all(action='DESELECT')
-                    c_obj = scn.objects.get(c_obj_name + 'd')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)             
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name, c_mdl_tag_file_name)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
-                    subprocess.check_output([concat_cmd],shell=True)
-                    sp_obj.select = True
-                    bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name)
-                    bpy.ops.object.select_all(action='DESELECT')
-
-                    c_obj = scn.objects.get(c_obj_name + 'c')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name_2, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_2, c_mdl_tag_file_name_2)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name, c_mdl_tag_file_name_2, sp_mdl_with_tags_file_name_2)
-                    subprocess.check_output([append_cmd],shell=True)
-                    bpy.ops.object.select_all(action='DESELECT')
-
-                    c_obj = scn.objects.get(c_obj_name + 'b')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name_3, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_3, c_mdl_tag_file_name_3)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name_2, c_mdl_tag_file_name_3, sp_mdl_with_tags_file_name_3)
-                    subprocess.check_output([append_cmd],shell=True)
-                    bpy.ops.object.select_all(action='DESELECT')
-
-                    c_obj = scn.objects.get(c_obj_name + 'a')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name_4, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_4, c_mdl_tag_file_name_4)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name_3, c_mdl_tag_file_name_4, sp_mdl_with_tags_file_name_4)
-                    subprocess.check_output([append_cmd],shell=True)
-                    bpy.ops.object.select_all(action='DESELECT')
-
-                    sp_obj.select = True
-                    bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name_4)
-                    obje = scn.objects[sp_obj_name]
-                    obje.processor.smoothed = True
-                    obje.processor.newton = True
-
-
-
-                elif scn.objects.get(c_obj_name + 'c') != None: 
-                    bpy.ops.object.select_all(action='DESELECT')
-                    c_obj = scn.objects.get(c_obj_name + 'c')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)             
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name, c_mdl_tag_file_name)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
-                    subprocess.check_output([concat_cmd],shell=True)
-                    sp_obj.select = True
-                    bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name)
-                    bpy.ops.object.select_all(action='DESELECT')
-
-                    c_obj = scn.objects.get(c_obj_name + 'b')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name_2, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_2, c_mdl_tag_file_name_2)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name, c_mdl_tag_file_name_2, sp_mdl_with_tags_file_name_2)
-                    subprocess.check_output([append_cmd],shell=True)
-                    bpy.ops.object.select_all(action='DESELECT')
-
-                    c_obj = scn.objects.get(c_obj_name + 'a')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name_3, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_3, c_mdl_tag_file_name_3)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name_2, c_mdl_tag_file_name_3, sp_mdl_with_tags_file_name_3)
-                    subprocess.check_output([append_cmd],shell=True)
-                    bpy.ops.object.select_all(action='DESELECT')
-
-                    sp_obj.select = True
-                    bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name_3)
-                    obje = scn.objects[sp_obj_name]
-                    obje.processor.smoothed = True
-                    obje.processor.newton = True
-
-                elif scn.objects.get(c_obj_name + 'b') != None: 
-                    bpy.ops.object.select_all(action='DESELECT')
-                    c_obj = scn.objects.get(c_obj_name + 'b')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)             
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name, c_mdl_tag_file_name)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
-                    subprocess.check_output([concat_cmd],shell=True)
-                    sp_obj.select = True
-                    bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name)
-                    bpy.ops.object.select_all(action='DESELECT')
-                    c_obj = scn.objects.get(c_obj_name + 'a')
-                    bpy.context.scene.objects.active = c_obj
-                    c_obj.select = True
-                    bpy.ops.export_scene.obj(filepath=c_obj_file_name_2, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                    tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_2, c_mdl_tag_file_name_2)
-                    subprocess.check_output([tag_cmd],shell=True)
-                    append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name, c_mdl_tag_file_name_2, sp_mdl_with_tags_file_name_2)
-                    subprocess.check_output([append_cmd],shell=True)
-                    bpy.ops.object.select_all(action='DESELECT')
-                    sp_obj.select = True
-                    bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name_2)
-                    obje = scn.objects[sp_obj_name]
-                    obje.processor.smoothed = True
-                    obje.processor.newton = True
 
                 else: 
                     obje = scn.objects[sp_obj_name]
@@ -1103,16 +1179,59 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         else:
             for obje in obje_list:
                 print('obje: ' + obje)
-            
-            #c_obj_list = []
-                c_obj_name = obje.replace('sp', 'c')
-         #c_obj_list = [obje for obje in scn.objects if re.fullmatch('d[0-9][0-9]c.*', obje.name) != None]
-         #for item in c_obj_list: 
-             #c_obj_name = item.name
-            #    print(c_obj_name)
-                
-                sp_obj_name = obje
                 sp_obj = scn.objects[obje]
+            
+                #c_obj_list = []
+                sp_obj_name = sp_obj.name
+                print(sp_obj_name)
+                            
+                digits = difflib.ndiff(sp_obj_name, obj1.replace('[0-9]', '#'))
+                d = list(digits)
+                #print(d)
+                predicate = '-'
+                filter_digits = list(itertools.filterfalse(lambda x: x[0] != predicate, d))
+                #print("filter:", filter_digits)
+
+                replace = []
+                for i in filter_digits:
+                    replace.append(str(i[2]))
+                print('replace:',replace) 
+
+                c_obj_name_list = []
+                c_obj_name = ''
+                for i in filtered:
+                    c_obj_name_list.append(i[2])
+                    c_obj_name += str(i[2])
+                #print('c obj_name:',c_obj_name)
+                #print('c_obj_name_list:', c_obj_name_list)
+
+                location = []
+                #print('c_obj_name_list before loop', c_obj_name_list)
+                for i in c_obj_name:
+                    location.append(i)
+                index = []
+                for position,char in enumerate(location):
+                    if char == '#':
+                        index.append(position)
+                print('index:',index)  
+            
+
+                count = 0
+                for i in index:
+                    c_obj_name_list[i] = replace[count]
+                    count+=1
+                #print(c_obj_name_list)
+
+                c_obj_name = ''
+                for item in c_obj_name_list:
+                    c_obj_name += item
+            
+                print('test:', c_obj_name)
+
+                print(sp_obj_name, c_obj_name)
+
+
+                
                 if sp_obj != None and sp_obj.processor.smoothed == True and sp_obj.processor.newton == False and self.include_list[sp_obj.name].non_manifold == False:
                     sp_obj_file_name = cwd + '/' + sp_obj_name + ".obj"
                     sp_mdl_file_name = cwd + '/' + sp_obj_name + ".mdl"
@@ -1148,7 +1267,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             # export "c" object as an obj file to file name c_obj_file_name
             # unselect all objects 
                     bpy.ops.object.select_all(action='DESELECT')
-                    c_obj_name = obje.replace('sp', 'c')
+                    #c_obj_name = obje.replace('sp', 'c')
                     c_obj = scn.objects.get(c_obj_name)
                     if c_obj != None:
                     # now select and export the "c" object:
@@ -1163,124 +1282,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                         bpy.ops.object.select_all(action='DESELECT')
                         sp_obj.select = True
                         bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name)
-                        obje = scn.objects[sp_obj_name]
-                        obje.processor.smoothed = True
-                        obje.processor.newton = True
-
-
-                    elif scn.objects.get(c_obj_name + 'd') != None: 
-                        bpy.ops.object.select_all(action='DESELECT')
-                        c_obj = scn.objects.get(c_obj_name + 'd')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)             
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name, c_mdl_tag_file_name)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
-                        subprocess.check_output([concat_cmd],shell=True)
-                        sp_obj.select = True
-                        bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name)
-                        bpy.ops.object.select_all(action='DESELECT')
-
-                        c_obj = scn.objects.get(c_obj_name + 'c')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name_2, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_2, c_mdl_tag_file_name_2)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name, c_mdl_tag_file_name_2, sp_mdl_with_tags_file_name_2)
-                        subprocess.check_output([append_cmd],shell=True)
-                        bpy.ops.object.select_all(action='DESELECT')
-
-                        c_obj = scn.objects.get(c_obj_name + 'b')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name_3, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_3, c_mdl_tag_file_name_3)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name_2, c_mdl_tag_file_name_3, sp_mdl_with_tags_file_name_3)
-                        subprocess.check_output([append_cmd],shell=True)
-                        bpy.ops.object.select_all(action='DESELECT')
-
-                        c_obj = scn.objects.get(c_obj_name + 'a')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name_4, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_4, c_mdl_tag_file_name_4)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name_3, c_mdl_tag_file_name_4, sp_mdl_with_tags_file_name_4)
-                        subprocess.check_output([append_cmd],shell=True)
-                        bpy.ops.object.select_all(action='DESELECT')
-                        bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name_4)
-                        obje = scn.objects[sp_obj_name]
-                        obje.processor.smoothed = True
-                        obje.processor.newton = True
-
-                   
-                    elif scn.objects.get(c_obj_name + 'c') != None: 
-                        bpy.ops.object.select_all(action='DESELECT')
-                        c_obj = scn.objects.get(c_obj_name + 'b')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)             
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name, c_mdl_tag_file_name)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
-                        subprocess.check_output([concat_cmd],shell=True)
-                        sp_obj.select = True
-                        bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name)
-                        bpy.ops.object.select_all(action='DESELECT')
-
-                        c_obj = scn.objects.get(c_obj_name + 'b')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name_2, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_2, c_mdl_tag_file_name_2)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name, c_mdl_tag_file_name_2, sp_mdl_with_tags_file_name_2)
-                        subprocess.check_output([append_cmd],shell=True)
-                        bpy.ops.object.select_all(action='DESELECT')
-
-                        c_obj = scn.objects.get(c_obj_name + 'a')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name_3, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_3, c_mdl_tag_file_name_3)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name_2, c_mdl_tag_file_name_3, sp_mdl_with_tags_file_name_3)
-                        subprocess.check_output([append_cmd],shell=True)
-                        bpy.ops.object.select_all(action='DESELECT')
-                        sp_obj.select = True
-                        bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name_3)
-                        obje = scn.objects[sp_obj_name]
-                        obje.processor.smoothed = True
-                        obje.processor.newton = True
-
-                    elif scn.objects.get(c_obj_name + 'b') != None: 
-                        bpy.ops.object.select_all(action='DESELECT')
-                        c_obj = scn.objects.get(c_obj_name + 'b')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)             
-
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name, c_mdl_tag_file_name)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
-                        subprocess.check_output([concat_cmd],shell=True)
-                        sp_obj.select = True
-                        bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name)
-                        bpy.ops.object.select_all(action='DESELECT')
-                        c_obj = scn.objects.get(c_obj_name + 'a')
-                        bpy.context.scene.objects.active = c_obj
-                        c_obj.select = True
-                        bpy.ops.export_scene.obj(filepath=c_obj_file_name_2, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False)    
-                        tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, c_obj_file_name_2, c_mdl_tag_file_name_2)
-                        subprocess.check_output([tag_cmd],shell=True)
-                        append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name, c_mdl_tag_file_name_2, sp_mdl_with_tags_file_name_2)
-                        subprocess.check_output([append_cmd],shell=True)
-                        bpy.ops.object.select_all(action='DESELECT')
-                        sp_obj.select = True
-                        bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name_2)
                         obje = scn.objects[sp_obj_name]
                         obje.processor.smoothed = True
                         obje.processor.newton = True
@@ -1314,8 +1315,9 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
 
     def smooth_all(self,context):
+        spine_name = self.spine_namestruct_name.replace('#','[0-9]')
         scn = bpy.context.scene
-        the_list = [obje for obje in scn.objects if re.fullmatch('d[0-9][0-9]sp.*', obje.name) or re.fullmatch('d[0-9][0-9][0-9]sp.*', obje.name) != None]
+        the_list = [obje for obje in scn.objects if re.search(spine_name, obje.name)!= None]
         for obje in the_list:
             if (self.include_list[obje.name].multi_component == False) and (self.include_list[obje.name].non_manifold == False) and(obje.processor.smoothed == False):
                 obje.processor.select_obje(context, obje)
@@ -1327,24 +1329,26 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     #Draw panel
     def draw_panel(self, context, panel):
         layout = panel.layout
-
         row = layout.row()
         row.operator("processor_tool.impser", text="Import .ser file")  
-
+        #row.operator("processor_tool.spine_namestruct", text = "Set Spine Name")
         row = layout.row()
         row.label(text="Trace List:", icon='CURVE_DATA')
         row.label(text="Include List:", icon='MESH_ICOSPHERE')
-
         row = layout.row()
         row.template_list("Trace_UL_draw_item","contours_in_ser_file",
                           bpy.context.scene.test_tool, "contour_list",
                           self, "active_contour_index",
                           rows=2)
+       # row.template_list("PSD_Trace_UL_draw_item","contours_in_ser_file",
+         #                 bpy.context.scene.test_tool, "contour_list",
+         #                 self, "active_contour_index",
+        #                  rows=2)
+       # row = layout.row() 
         row.template_list("Include_UL_draw_item","included_in_ser_file",
                           bpy.context.scene.test_tool, "include_list",
                           self, "active_include_index",
                           rows=2)
-
         row = layout.row()
         row.operator("processor_tool.include_contour", text="Include Contour") 
         row.operator("processor_tool.remove_contour", text="Remove Contour")
@@ -1359,7 +1363,20 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
         row = layout.row()
         row.operator("processor_tool.fix_mesh", text = "Fix Mesh Objects")
-
+        row = layout.row()
+        row.label(text="Define Region Names for Tagging (use '#' to signify an integer)")  
+        row = layout.row()     
+        box1 = layout.box()
+        row = box1.row()
+        col = row.column(align = True)
+        col.operator("processor_tool.spine_namestruct", icon = "RESTRICT_SELECT_OFF", text = "Set Main Object Name")          
+        #row.label(text= 'processor_tool.spine_namestruct')  
+        row.label(text= "Current: " + bpy.context.scene.test_tool.spine_namestruct_name)
+        box1 = layout.box()
+        row = box1.row()
+        col = row.column(align = True)
+        col.operator("processor_tool.psd_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Meta Object Name")
+        row.label(text= "Current: " +  bpy.context.scene.test_tool.PSD_namestruct_name) 
         row = layout.row()
         row.label(text="Object List:", icon='MESH_ICOSPHERE')
         row = layout.row()
@@ -1367,16 +1384,24 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                           bpy.context.scene, "objects",
                           self, "active_sp_index",
                           rows=2) 
-        row = layout.row()
+        #row = layout.row()
         row.operator("processor_tool.remove_components", text="Allow Smooth")
         row = layout.row()
-        row.operator("processor_tool.smooth", text="Smooth Object")
+        row.operator("processor_tool.smooth", text="Smooth Selected Object (any!)")
+        #row = layout.row()
+        row.operator("processor_tool.tag_psd_single", text="Define Meta Region ('tag')")
         row = layout.row()
         row.operator("processor_tool.smooth_all", text="Smooth All Objects in List")
-        row = layout.row()
-        row.operator("processor_tool.tag_psd_single", text="Assign Selected PSD Region")
-        row = layout.row()
-        row.operator("processor_tool.tag_psds", text="Assign PSD Regions")
+        #row = layout.row()
+        row.operator("processor_tool.tag_psds", text="Define Meta Region for All Objects in List")
+        #row = layout.row()
+        #box1 = layout.box()
+        #row = box1.row()
+        #col = row.column(align = True)
+        #col.operator("processor_tool.central_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Central Object Name")
+        #row.label(text="Default: dXX (use XX for integer value)")
+        #row = layout.row()
+        #row.operator("processor_tool.merge_objs", text="Merge Objects")
 
 
 

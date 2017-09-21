@@ -26,8 +26,8 @@ from bpy_extras.io_utils import ImportHelper
 bl_info = {
     "name": "Neuropil Tools",
     "author": "Cailey Bromer, Tom Bartol",
-    "version": (1, 0, 0),
-    "blender": (2, 66, 1),
+    "version": (1, 2, 0),
+    "blender": (2, 78, 1),
     "api": 55057,
     "location": "View3D > Tools > Neuropil Tools Panel",
     "description": "Modeling Tools for Brain Neuropil",
@@ -59,6 +59,7 @@ else:
         connectivity_tool
 
 
+
 import bpy
 
 # Enable the Addon
@@ -67,9 +68,13 @@ def register():
     # register all of the components of the Addon
     bpy.utils.register_module(__name__)
 
-    # Extend the metadata of bpy.types.Object with our spine head metadata
+    # Extend the metadata of bpy.types.Object with our Processor Tool metadata
     bpy.types.Object.processor = bpy.props.PointerProperty(
         type=processor_tool.ProcessorToolObjectProperty)
+
+   # Extend the metadata of bpy.types.Object with our Jaccard Tool metadata
+    #bpy.types.Object.jaccard_obj = bpy.props.PointerProperty(
+    #    type=jaccard_tool.JaccardToolObjectProperty)
 
     # Extend the metadata of bpy.types.Object with our spine head metadata
     bpy.types.Object.spine_head_ana = bpy.props.PointerProperty(
@@ -79,17 +84,15 @@ def register():
     bpy.types.Object.connectivity = bpy.props.PointerProperty(
         type=connectivity_tool.ConnectivityToolObjectProperty)
 
-    # Extend the metadata of bpy.types.Scene with our Test Tool metadata
+    # Extend the metadata of bpy.types.Scene with our Processor Tool metadata
     bpy.types.Scene.test_tool = bpy.props.PointerProperty(
         type=processor_tool.ProcessorToolSceneProperty)
 
-    # Extend the metadata of bpy.types.Scene with our Test Tool metadata
-    #bpy.types.Scene.include = bpy.props.PointerProperty(
-    #    type=processor_tool.ContourIncludeSceneProperty)
+
 
     print("Neuropil Tools registered")
 
-
+ 
 
 # Disable the Addon
 def unregister():
