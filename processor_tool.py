@@ -865,6 +865,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         ser_file = os.path.split(self.filepath)[-1]
         ser_prefix = os.path.splitext(ser_file)[0]
         out_file = ser_dir + '/' + ser_prefix + "_output"
+        print("Fix Mesh Out_file:", out_file)
 
         if os.path.exists(out_file) == False:
             os.mkdir(out_file)
