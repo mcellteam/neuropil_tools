@@ -892,7 +892,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             if mesh_props.components >1:           
                 print('\nFound Multi-component Mesh: %s\n' % (obj.name))
                 self.include_list[name].multi_component = True
-            if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'): 
+            if ((mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals') and mesh_props.components == 1): 
                 print('\nFixing Single Flawed Mesh: %s\n' % (contour_name))
                 name = obj.name
                 m = obj.data
@@ -946,7 +946,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 if mesh_props.components >1:
                     print('\nFound Multi-component Mesh: %s\n' % (obj.name))
                     self.include_list[name].multi_component = True
-                if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'): 
+                if ((mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals') and mesh_props.components == 1): 
                     print('\nFound Flawed Mesh: %s\n' % (obj.name))
                     m = obj.data
                     context.scene.objects.unlink(obj)
