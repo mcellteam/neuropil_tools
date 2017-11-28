@@ -88,6 +88,10 @@ def register():
     bpy.types.Scene.test_tool = bpy.props.PointerProperty(
         type=processor_tool.ProcessorToolSceneProperty)
 
+    # Extend the metadata of bpy.types.Scene with our Volumetric Analysis metadata
+    bpy.types.Scene.volume_analyzer = bpy.props.PointerProperty(
+        type=spine_head_analyzer.SpineHeadAnalyzerSceneProperty)
+
 
 
     print("Neuropil Tools registered")
