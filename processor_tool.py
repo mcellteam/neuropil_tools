@@ -1325,6 +1325,26 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 obje.processor.smooth(context)
 
 
+    def merge_objs(self,context):
+        merge_obje = bpy.context.active_object
+        name = merge_obje.name
+        bpy.ops.object.modifier_add(type = 'BOOLEAN')
+        bpy.data.objects[name].modifiers['Boolean'].operation = 'UNION'
+        merge_obje_list = [obje.name for obje in self.include_list if re.match(name[:3], obje.name[:3]) != None and obje.name != name]
+        for obje in merge_obje_list: 
+           bpy.ops.object.modifier_add(type = 'BOOLEAN')
+           bpy.data.objects[name].modifiers['Boolean'].operation = 'UNION'
+           bpy.data.objects[name].modifiers['Boolean'].object = bpy.data.objects[obje]
+           bpy.ops.object.modifier_apply(apply_as = 'DATA', modifier='Boolean')
+        merge_obje.processor.select_obje(context, merge_obje)
+        #self.fix_mesh(merge_obje, 'single')
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.quads_convert_to_tris(quad_method = 'BEAUTY', ngon_method='BEAUTY')
+        bpy.ops.mesh.reveal()
+        bpy.ops.mesh.select_all(action='SELECT')
+        
+
+
 
 
     #Draw panel
@@ -1400,9 +1420,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         #row = box1.row()
         #col = row.column(align = True)
         #col.operator("processor_tool.central_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Central Object Name")
-        #row.label(text="Default: dXX (use XX for integer value)")
-        #row = layout.row()
-        #row.operator("processor_tool.merge_objs", text="Merge Objects")
+        row = layout.row()
+        row.label(text= "Merge central object with associated objects: ")
+        row = layout.row()
+        row.operator("processor_tool.merge_objs", text="Merge Objects")
 
 
 
