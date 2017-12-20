@@ -53,7 +53,106 @@ def unregister():
     bpy.utils.unregister_module(__name__)
 
 
+#inner_namestruct_name = ' '
+#inter_namestruct_name = ' '
+#outer_namestruct_name = ' '
+
 # Spine Head Analyzer Operators:
+
+class NEUROPIL_OT_spine_namestruct(bpy.types.Operator):
+    bl_idname = "processor_tool.spine_namestruct"
+    bl_label = "Define Naming Pattern for Main Object"    
+    bl_description = "Define Naming Pattern for Main Object"    
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_options = {'UNDO'} 
+
+    spine_namestruct_name = StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
+  
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def execute(self, context):
+        context.scene.test_tool.spine_namestruct(context, self.spine_namestruct_name)
+        return {'FINISHED'}   
+
+
+class NEUROPIL_OT_psd_namestruct(bpy.types.Operator):
+    bl_idname = "processor_tool.psd_namestruct"
+    bl_label = "Define Naming Pattern for Meta Object"    
+    bl_description = "Define Naming Pattern for Meta Object"    
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_options = {'UNDO'} 
+
+    PSD_namestruct_name = StringProperty(name = "Name: ", description = "Assign PSD Name", default = "")
+  
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+   
+    def execute(self, context):
+        context.scene.test_tool.PSD_namestruct(context, self.PSD_namestruct_name)
+        return {'FINISHED'}   
+
+class NEUROPIL_OT_inter_namestruct(bpy.types.Operator):
+    bl_idname = "spine_head_analyzer.inter_namestruct"
+    bl_label = "Define Naming Pattern for Intermediate Region (spine neck)"    
+    bl_description = "Define Naming Pattern for Intermediate Region (spine neck)"    
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_options = {'UNDO'} 
+
+    #global inter_namestruct_name
+    inter_namestruct_name = StringProperty(name = "Name: ", description = "Assign Intermediate Region Name", default = "")
+  
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+   
+    def execute(self, context):
+        context.scene.volume_analyzer.inter_namestruct(context, self.inter_namestruct_name)
+        return {'FINISHED'}   
+
+class NEUROPIL_OT_outer_namestruct(bpy.types.Operator):
+    bl_idname = "spine_head_analyzer.outer_namestruct"
+    bl_label = "Define Naming Pattern for Outer Region (whole spine)"    
+    bl_description = "Define Naming Pattern for Outer Region (whole spine)"    
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_options = {'UNDO'} 
+
+    ##global outer_namestruct_name
+    outer_namestruct_name = StringProperty(name = "Name: ", description = "Assign Outer Region Name", default = "")
+  
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+   
+    def execute(self, context):
+        context.scene.volume_analyzer.outer_namestruct(context, self.outer_namestruct_name)
+        return {'FINISHED'} 
+
+class NEUROPIL_OT_inner_namestruct(bpy.types.Operator):
+    bl_idname = "spine_head_analyzer.inner_namestruct"
+    bl_label = "Define Naming Pattern for Inner Region (spine head)"    
+    bl_description = "Define Naming Pattern for Inner Region (spine head)"    
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_options = {'UNDO'} 
+    
+    #global inner_namestruct_name
+    inner_namestruct_name = StringProperty(name = "Name: ", description = "Assign Inner Region Name", default = "")
+  
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+   
+    def execute(self, context):
+        context.scene.volume_analyzer.inner_namestruct(context, self.inner_namestruct_name)
+        return {'FINISHED'}    
+
 
 class NEUROPIL_OT_select_psd(bpy.types.Operator):
     bl_idname = "spine_head_analyzer.select_psd"
@@ -183,7 +282,7 @@ class NEUROPIL_OT_output(bpy.types.Operator):
             dend_outFile.close()
 
         else:
-            dend_outFile = open('spine_head_analysis_output.txt', 'wt')
+            dend_outFile = open(outfilename, 'wt')
             dend_outFile.write('# obj sy pre_post head_vol spine_vol neck_vol computed_area region_area\n')
             dends = bpy.context.scene.test_tool.spine_namestruct_name.replace('#', '[0-9]')
             dend_filter = dends
@@ -217,8 +316,9 @@ class NEUROPIL_UL_check_psd(bpy.types.UIList):
         scn = context.scene                  
         active_obj = context.active_object
         c_name_struct = bpy.context.scene.test_tool.PSD_namestruct_name.replace('#','[0-9]')
+        sp_name_struct = bpy.context.scene.test_tool.spine_namestruct_name.replace('#','[0-9]')
         psd = active_obj.spine_head_ana.psd_list.get(item.name)  
-        self.filter_name = c_name_struct
+        #self.filter_name = c_name_struct
         if psd != None:
             if psd.char_postsynaptic:
                 volume = active_obj.spine_head_ana.psd_list[item.name].volume
@@ -255,7 +355,7 @@ class NEUROPIL_UL_check_psd(bpy.types.UIList):
 
 
 class NEUROPIL_PT_SpineHeadAnalyzer(bpy.types.Panel):
-    bl_label = "Spine Head Analyzer"
+    bl_label = "Volumetric Analysis Tool"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_options = {'DEFAULT_CLOSED'}
@@ -266,9 +366,29 @@ class NEUROPIL_PT_SpineHeadAnalyzer(bpy.types.Panel):
             context.object.spine_head_ana.draw_panel(context, panel=self)
 
 
+
+
+class SpineHeadAnalyzerSceneProperty(bpy.types.PropertyGroup):
+    inner_namestruct_name = StringProperty("Set Inner Region Name", default = "d##sph##")
+    inter_namestruct_name = StringProperty("Set Intermediate Region Name", default = "d##spn##")
+    outer_namestruct_name = StringProperty("Set Outer Region Name", default = "d##sp##")
+
+    def spine_namestruct(self, context, spine_namestruct_name):
+        self.spine_namestruct_name = spine_namestruct_name
+
+    def PSD_namestruct(self, context, PSD_namestruct_name):
+        self.PSD_namestruct_name = PSD_namestruct_name
+        
+    def inter_namestruct(self, context, inter_namestruct_name):
+        self.inter_namestruct_name = inter_namestruct_name
+
+    def outer_namestruct(self, context, outer_namestruct_name):
+        self.outer_namestruct_name = outer_namestruct_name
+
+    def inner_namestruct(self, context, inner_namestruct_name):
+        self.inner_namestruct_name = inner_namestruct_name
+     
 # Spine Head Analyzer Properties:
-
-
 # Properties of the PSDs:
 
 class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
@@ -302,6 +422,10 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
                           ('Full','Full','')
                         ]
     ensheathment = EnumProperty(items = ensheathment_enum, name="Glial Ensheathment", description='Degree of Glial Ensheathment')
+    #inner_namestruct_name = bpy.context.scene.volume_analyzer.inner_namestruct_name
+    #inter_namestruct_name = bpy.context.scene.volume_analyzer.inter_namestruct_name
+    #outer_namestruct_name = bpy.context.scene.volume_analyzer.outer_namestruct_name
+
     
 
     def init_psd(self,context,name):
@@ -829,19 +953,192 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
     def compute_volume(self,context,mode,n_components,make_shell_opt=False,make_jaccard_opt=False):
         # Now make a new region for spine head and name it
           # Generate the name for the spine head
+        
+        #INNER VOLUME - get naming diff
+        obj1 = bpy.context.scene.test_tool.PSD_namestruct_name
+        obj2 = bpy.context.scene.volume_analyzer.inner_namestruct_name
+        print(obj1, obj2)
+
+        diff = difflib.ndiff(obj1, obj2)
+        d = list(diff)
+        print(d)
+        predicate = '-'
+        filtered = list(itertools.filterfalse(lambda x: x[0] == predicate, d))
+        print(filtered)
+ 
+        inner_obj_name_list = []
+        inner_obj_name = ''
+        for i in filtered:
+            #print(i[2])
+            #print(type(i))
+            inner_obj_name_list.append(i[2])
+            inner_obj_name += str(i[2])
+        obj1 = obj1.replace('#','[0-9]')
+        obj2 = obj2.replace('#','[0-9]')
+ 
+        #apply naming difference
         name = self.name
-        print(name)
+        digits = difflib.ndiff(name, obj1.replace('[0-9]', '#'))
+        d = list(digits)
+        print(d)
+        predicate = '-'
+        filter_digits = list(itertools.filterfalse(lambda x: x[0] != predicate, d))
+        print("filter:", filter_digits)
+
+        replace = []
+        for i in filter_digits:
+            replace.append(str(i[2]))
+        print('replace:', replace) 
+
+        location = []
+        for i in inner_obj_name:
+            location.append(i)
+        index = []
+        for position,char in enumerate(location):
+            if char == '#':
+                index.append(position)
+        print('index:',index)  
+            
+        
+        count = 0
+        for i in index:
+            inner_obj_name_list[i] = replace[count]
+            count+=1
+            #print(c_obj_name_list)
+
+        inner_obj_name = ''
+        for item in inner_obj_name_list:
+            inner_obj_name += item
+        #bpy.context.scn.volume_analyzer.inner_obj_name = inner_obj_name
+                
+        #INTER VOLUME - get naming diff
+        obj1 = bpy.context.scene.test_tool.PSD_namestruct_name
+        obj2 = bpy.context.scene.volume_analyzer.inter_namestruct_name
+        print(obj1, obj2)
+
+        diff = difflib.ndiff(obj1, obj2)
+        d = list(diff)
+        print(d)
+        predicate = '-'
+        filtered = list(itertools.filterfalse(lambda x: x[0] == predicate, d))
+        print(filtered)
+ 
+        inter_obj_name_list = []
+        inter_obj_name = ''
+        for i in filtered:
+            #print(i[2])
+            #print(type(i))
+            inter_obj_name_list.append(i[2])
+            inter_obj_name += str(i[2])
+        obj1 = obj1.replace('#','[0-9]')
+        obj2 = obj2.replace('#','[0-9]')
+ 
+        #apply naming difference
+        name = self.name
+        digits = difflib.ndiff(name, obj1.replace('[0-9]', '#'))
+        d = list(digits)
+        print(d)
+        predicate = '-'
+        filter_digits = list(itertools.filterfalse(lambda x: x[0] != predicate, d))
+        print("filter:", filter_digits)
+
+        replace = []
+        for i in filter_digits:
+            replace.append(str(i[2]))
+        print('replace:', replace) 
+
+        location = []
+        for i in inter_obj_name:
+            location.append(i)
+        index = []
+        for position,char in enumerate(location):
+            if char == '#':
+                index.append(position)
+        print('index:',index)  
+            
+        
+        count = 0
+        for i in index:
+            inter_obj_name_list[i] = replace[count]
+            count+=1
+            #print(c_obj_name_list)
+
+        inter_obj_name = ''
+        for item in inter_obj_name_list:
+            inter_obj_name += item
+        #bpy.context.scn.volume_analyzer.inter_obj_name = inter_obj_name
+
+        #OUTER VOLUME - get naming diff
+        obj1 = bpy.context.scene.test_tool.PSD_namestruct_name
+        obj2 = bpy.context.scene.volume_analyzer.outer_namestruct_name
+        print(obj1, obj2)
+
+        diff = difflib.ndiff(obj1, obj2)
+        d = list(diff)
+        print(d)
+        predicate = '-'
+        filtered = list(itertools.filterfalse(lambda x: x[0] == predicate, d))
+        print(filtered)
+ 
+        outer_obj_name_list = []
+        outer_obj_name = ''
+        for i in filtered:
+            #print(i[2])
+            #print(type(i))
+            outer_obj_name_list.append(i[2])
+            outer_obj_name += str(i[2])
+        obj1 = obj1.replace('#','[0-9]')
+        obj2 = obj2.replace('#','[0-9]')
+ 
+        #apply naming difference
+        name = self.name
+        digits = difflib.ndiff(name, obj1.replace('[0-9]', '#'))
+        d = list(digits)
+        print(d)
+        predicate = '-'
+        filter_digits = list(itertools.filterfalse(lambda x: x[0] != predicate, d))
+        print("filter:", filter_digits)
+
+        replace = []
+        for i in filter_digits:
+            replace.append(str(i[2]))
+        print('replace:', replace) 
+
+        location = []
+        for i in outer_obj_name:
+            location.append(i)
+        index = []
+        for position,char in enumerate(location):
+            if char == '#':
+                index.append(position)
+        print('index:',index)  
+            
+        
+        count = 0
+        for i in index:
+            outer_obj_name_list[i] = replace[count]
+            count+=1
+            #print(c_obj_name_list)
+
+        outer_obj_name = ''
+        for item in outer_obj_name_list:
+            outer_obj_name += item
+
+        #bpy.context.scn.volume_analyzer.outer_obj_name = outer_obj_name
+        
+        print('Test names:', name, inner_obj_name, inter_obj_name, outer_obj_name)
+        print(outer_obj_name)
         orig_obj = context.active_object
 #        print("Computing volume of %s on %s..." % (self.name, orig_obj.name))
         if mode == 'head':
-            if self.char_postsynaptic:
-                reg_name = self.name.replace(name, name + '_sph')
-                self.head_name = reg_name
-            else:
-                reg_name = self.name.replace(name, name + '_axb')
-                self.head_name = reg_name
+            #if self.char_postsynaptic:
+            reg_name = self.name.replace(name, inner_obj_name)
+            self.head_name = reg_name
+            #else:
+            #    reg_name = self.name.replace(name, name + '_axb')
+            #    self.head_name = reg_name
         else: 
-            reg_name = self.name.replace(name, name + '_sp')
+            reg_name = self.name.replace(name, outer_obj_name)
             self.spine_name = reg_name
 
         reg = orig_obj.mcell.regions.region_list.get(reg_name)
@@ -1164,14 +1461,14 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
         # Make shell object from hull/head/spine
         if make_shell_opt:
             if mode == 'head': 
-                if self.char_postsynaptic:
-                    shell_name = self.name.replace(name, name + '_sphs')
-                    offset = -0.005
-                else:
-                    shell_name = self.name.replace(name, name + '_axbs')
-                    offset = -0.005
+                #self.char_postsynaptic:
+                shell_name = self.name.replace(name, 'in_sh_'+ inner_obj_name)
+                offset = -0.005
+                #else:
+                #    shell_name = self.name.replace(name, name + '_axbs')
+                #    offset = -0.005
             else:
-                shell_name = self.name.replace(name, name + '_sps')
+                shell_name = self.name.replace(name, 'out_sh_' + outer_obj_name)
                 offset = -0.010
 #                offset = -0.050
             #remove regions from shell
@@ -1195,7 +1492,7 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             hull.select = False
             hull.hide = True
         elif make_jaccard_opt:
-            shell_name = self.name.replace(name, name + '_sph') + '_tmp_jaccard'
+            shell_name = self.name.replace(name, inner_obj_name) + '_tmp_jaccard'
             #remove regions from shell
             hull.mcell.regions.remove_all_regions(context)
             #rename the shell
@@ -1228,9 +1525,9 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             bpy.ops.mesh.select_all(action='DESELECT')
 	
             # Make Neck Region
-            sp_name = self.name.replace(name, name +'_sp')
-            sph_name = self.name.replace(name, name + '_sph')
-            spn_name = self.name.replace(name, name + '_spn')
+            sp_name = self.name.replace(name, outer_obj_name)
+            sph_name = self.name.replace(name, inner_obj_name)
+            spn_name = self.name.replace(name, inter_obj_name)
 
             neck_reg = orig_obj.mcell.regions.region_list.get(spn_name)
             if neck_reg == None:
@@ -1329,8 +1626,67 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
         bpy.ops.mcell.model_objects_add()
         bpy.ops.object.mode_set(mode='EDIT')
         #counter = 0
-        psd_region_name = bpy.context.scene.test_tool.PSD_namestruct_name.replace('#','0')
-        #if psd_region_name != None:
+        obj1 = bpy.context.scene.test_tool.spine_namestruct_name
+        obj2 = bpy.context.scene.test_tool.PSD_namestruct_name
+        print(obj1, obj2)
+
+        diff = difflib.ndiff(obj1, obj2)
+        d = list(diff)
+        print(d)
+        predicate = '-'
+        filtered = list(itertools.filterfalse(lambda x: x[0] == predicate, d))
+        print(filtered)
+ 
+        c_obj_name_list = []
+        c_obj_name = ''
+        for i in filtered:
+            #print(i[2])
+            #print(type(i))
+            c_obj_name_list.append(i[2])
+            c_obj_name += str(i[2])
+       
+
+        obj1 = obj1.replace('#','[0-9]')
+        obj2 = obj2.replace('#','[0-9]')
+        #print(obj2)
+
+        sp_obj_name = obj.name
+
+        digits = difflib.ndiff(sp_obj_name, obj1.replace('[0-9]', '#'))
+        d = list(digits)
+        #print(d)
+        predicate = '-'
+        filter_digits = list(itertools.filterfalse(lambda x: x[0] != predicate, d))
+        #print("filter:", filter_digits)
+
+        replace = []
+        for i in filter_digits:
+            replace.append(str(i[2]))
+        #print('replace:', replace) 
+
+        location = []
+        for i in c_obj_name:
+            location.append(i)
+        index = []
+        for position,char in enumerate(location):
+            if char == '#':
+                index.append(position)
+        #print('index:',index)  
+            
+
+        count = 0
+        for i in index:
+            c_obj_name_list[i] = replace[count]
+            count+=1
+            #print(c_obj_name_list)
+
+        c_obj_name = ''
+        for item in c_obj_name_list:
+            c_obj_name += item
+        psd_region_name = c_obj_name
+                
+        print(psd_region_name)
+        #if psd_region_name != None
         #    counter +=1 
         #    psd_region_name = bpy.context.scene.test_tool.PSD_namestruct_name.replace('X',str(counter))
         #bpy.ops.mesh.select_all(action='SELECT') 
@@ -1421,8 +1777,8 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                     print("  Updated PSD area: %g" % (psd.area_psd_az))
                     report_file.write("  Updated PSD area: %g\n" % (psd.area_psd_az))
                 if ((psd.area_head == 0.0) or (psd.area_spine == 0.0)):
-                    head_region_name = psd_region_name.replace(name, name + '_sph')
-                    spine_region_name = psd_region_name.replace(name, name + '_sp')
+                    head_region_name = psd_region_name.replace(name, inner_obj_name)
+                    spine_region_name = psd_region_name.replace(name, outer_obj_name)
                     bpy.ops.object.mode_set(mode='EDIT')
                     bpy.ops.mesh.select_mode(type='FACE')
                     if psd.area_head == 0.0:
@@ -1462,7 +1818,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                     report_file.write('  ***** Negative neck volume for PSD %s %g\n' % (psd_region_name, psd.volume_neck))
                 if (psd.volume_neck > 0.0):
                     psd.compute_neck_stats(context)
-                    neck_region_name = psd_region_name.replace(name, name +'_spn')
+                    neck_region_name = psd_region_name.replace(name, inner_obj_name)
                     report_file.write('  Updated diameter and length of neck %s  max diameter: %g  min diameter: %g  length: %g\n' % (neck_region_name, psd.diameter_neck_max, psd.diameter_neck_min, psd.length_neck))
                   
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -1491,7 +1847,30 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
 
     def draw_panel(self, context, panel):
         layout = panel.layout
-
+        row = layout.row() 
+        row.label(text="Define Region Names for Tagging (use '#' to signify an integer)")  
+        row = layout.row()     
+        box1 = layout.box()
+        row = box1.row()
+        col = row.column(align = True)
+        col.operator("processor_tool.psd_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "'Initialize Region' Name")
+        row.label(text= "Default Meta Object Name: " +  bpy.context.scene.test_tool.PSD_namestruct_name)
+        box1 = layout.box()
+        row = box1.row()
+        col = row.column(align = True) 
+        col.operator("spine_head_analyzer.inner_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Inner Object Name")
+        row.label(text= "Current: " +  bpy.context.scene.volume_analyzer.inner_namestruct_name)  
+        box1 = layout.box()
+        row = box1.row()
+        col = row.column(align = True) 
+        col.operator("spine_head_analyzer.inter_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Intermediate Object Name")
+        row.label(text= "Current: " +  bpy.context.scene.volume_analyzer.inter_namestruct_name) 
+        box1 = layout.box()
+        row = box1.row()
+        col = row.column(align = True) 
+        col.operator("spine_head_analyzer.outer_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Outer Object Name")
+        row.label(text= "Current: " +  bpy.context.scene.volume_analyzer.outer_namestruct_name) 
+        row = layout.row()
         active_obj = context.active_object
 
         if (active_obj != None) and (active_obj.type == 'MESH'):
@@ -1499,8 +1878,6 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
             row.label(text="Select all faces of spine head associated with a PSD", icon='FORWARD')
             row = layout.row()
             row.label(text="Spine PSDs:", icon='MESH_ICOSPHERE')               
-            row = layout.row()
-            row.operator("spine_head_analyzer.output", text="Output")
             row = layout.row()
             row.operator("spine_head_analyzer.recompute_volumes", text="Recompute All Volumes")
 # Layout active_object.mcell.regions.region_list with filter "*sy*" and active_psd_region_index
@@ -1523,6 +1900,8 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
             else:
                 row = layout.row()
                 row.operator("spine_head_analyzer.generate_mock_psd", text = "Initialize Region")
+            row = layout.row()
+            row.operator("spine_head_analyzer.output", text="Output")
             if psd != None:
                 if psd.char_postsynaptic:
                     #row = layout.row()
@@ -1531,18 +1910,22 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                     row = layout.row()
                     row.enabled = (mesh.total_face_sel > 0)
                     row = layout.row()
-                    row.operator("spine_head_analyzer.compute_volume", text="Compute Spine Head Volume")
+                    row.operator("spine_head_analyzer.compute_volume", text="Compute Inner Volume")
                     row.enabled = (mesh.total_face_sel > 0)
-                    row.operator("spine_head_analyzer.compute_volume_spine", text="Compute Whole Spine Volume")
+                    row.operator("spine_head_analyzer.compute_volume_spine", text="Compute Outer Volume")
                     if (psd.volume != 0.0):
                         row = layout.row()
-                        row.label(text="Spine Head Volume: %.4g um^3" % (psd.volume))
+                        row.label(text="Inner Volume: %.4g um^3" % (psd.volume)) 
+                        row = layout.row()
+                        row.label(text ="Inner Volume Surface Area: %.4g um^3" % (psd.area_head))
+                        row = layout.row()
+                        row.label(text ="Region Surface Area: %.4g um^3" % (psd.area_psd_az))
                     if (psd.volume_neck != 0.0):                    
                         row = layout.row()
-                        row.label(text="Spine Neck Volume: %.4g um^3" % (psd.volume_neck))
+                        row.label(text="Intermediate Volume: %.4g um^3" % (psd.volume_neck))
                     if (psd.volume_spine != 0.0):                    
                         row = layout.row()
-                        row.label(text="Whole Spine Volume: %.4g um^3" % (psd.volume_spine))
+                        row.label(text="Outer Volume: %.4g um^3" % (psd.volume_spine))
                     #row = layout.row()
                     #row.label(text="Spine Neck List:", icon='MESH_ICOSPHERE')          
                     #if psd.neck_name != "": 
