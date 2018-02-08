@@ -175,6 +175,17 @@ class NEUROPIL_OT_generate_mock_psd(bpy.types.Operator):
         context.object.spine_head_ana.generate_mock_psd(context)
         return {'FINISHED'}
 
+class NEUROPIL_OT_remove_mock_psd(bpy.types.Operator):
+    bl_idname = "spine_head_analyzer.remove_mock_psd"
+    bl_label = "Remove Initialized Region"
+    bl_description = "Remove Initialized Region"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        context.object.spine_head_ana.remove_mock_psd(context)
+        return {'FINISHED'}
+
+
 
 class NEUROPIL_OT_compute_volume(bpy.types.Operator):
     bl_idname = "spine_head_analyzer.compute_volume"
@@ -1575,7 +1586,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
     make_shell_spine_opt = BoolProperty(name="Make Spine Shell?", default=True)
     set_head_mat_opt = BoolProperty(name="Set Spine Head Material?", default=False)
     diameter_neck = FloatProperty(name="Diameter of Neck",default=0.0)
-    #initialized = StringProperty(name = "Full Object Region", default = "")
+    initialized = BoolProperty(name = "Full Object Region", default = False)
 
 
     def get_active_psd(self,context):
@@ -1695,8 +1706,20 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
         reg.assign_region_faces(context)
         bpy.ops.mesh.select_all(action='DESELECT')
         #reg.select_region_faces(context)
-        #self.initialized == True 
-                    
+        self.initialized = True 
+
+    def remove_mock_psd(self,context):
+        bpy.ops.object.mode_set(mode='OBJECT')
+        obj = bpy.context.scene.objects.active
+        #obj = context.active_object
+        bpy.ops.object.mode_set(mode='EDIT')
+        reg_list = obj.mcell.regions.region_list
+        if self.initialized == True:
+            reg = obj.mcell.regions
+            active = reg.get_active_region()
+            reg_name = active.name
+            active_region_index = reg_list.find(reg_name)
+            bpy.ops.mcell.region_remove()
 
 
     def set_n_components(self,context):
@@ -1900,6 +1923,8 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
             else:
                 row = layout.row()
                 row.operator("spine_head_analyzer.generate_mock_psd", text = "Initialize Region")
+            row = layout.row()
+            row.operator("spine_head_analyzer.remove_mock_psd", text = "Remove Initialized Region")
             row = layout.row()
             row.operator("spine_head_analyzer.output", text="Output")
             if psd != None:

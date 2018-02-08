@@ -397,10 +397,12 @@ class Include_UL_draw_item(bpy.types.UIList):
                   active_propname, index):
         scn = bpy.context.scene
         self.use_filter_sort_alpha = True    
-        if item.non_manifold == True:
-            layout.label(item.name, icon='ERROR')
-        elif item.multi_component == True:
+        #if item.non_manifold == True:
+     #    layout.label(item.name, icon='ERROR')
+        if item.multi_component == True:
             layout.label(item.name, icon='NLA')
+        elif item.genus_issue == True:
+            layout.label(item.name, icon = "MESH_TORUS")
         elif item.generated == True:
 #scn.objects[scn.test_tool.include_list[str(item)] != None:
             layout.label(item.name, icon='MESH_ICOSPHERE')
@@ -416,7 +418,9 @@ class SCN_UL_obj_draw_item(bpy.types.UIList):
         filt = scn.test_tool.spine_namestruct_name.replace('#','[0-9]')
         self.filter_name = filt
         self.use_filter_sort_alpha = True
-        if item.processor.newton == True:
+        if item.processor.multi_synaptic == True:
+            layout.label(item.name, icon = "MANIPUL")
+        elif item.processor.newton == True:
             layout.label(item.name, icon='FILE_TICK')
         elif item.processor.smoothed == True:
             layout.label(item.name, icon='MOD_SMOOTH')
@@ -460,11 +464,13 @@ class IncludeNameSceneProperty(bpy.types.PropertyGroup):
     name = StringProperty(name= "Include name", default ="")
     generated = BoolProperty(name = "Mesh Object Generated", default = False)
     multi_component = BoolProperty(name = "Multiple Components in Mesh", default = False)
-    non_manifold = BoolProperty(name = "Non-manifold Mesh", default = False)       
+    non_manifold = BoolProperty(name = "Non-manifold Mesh", default = False) 
+    genus_issue = BoolProperty(name = "Genus > 0", default = False)         
     filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
     spine_filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
     PSD_filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
     problem = BoolProperty(name = "Problem Tagging", default = False)
+    
     
     def init_include(self,context,name):
         self.name = name
@@ -478,6 +484,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
     n_components = IntProperty(name="Number of Components in Mesh", default=0)
     smoothed = BoolProperty(name="Smoothed Object", default=False)
     newton = BoolProperty(name = "New Object", default=False)
+    multi_synaptic = BoolProperty(name = "Multiple Synapses", default = False)
     fix_all_fail = BoolProperty(name = "Failed to Fix Obj", default = False)
     
 
@@ -892,6 +899,13 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             if mesh_props.components >1:           
                 print('\nFound Multi-component Mesh: %s\n' % (obj.name))
                 self.include_list[name].multi_component = True
+            #if mesh_props.manifold == False:
+            if mesh_props.genus  >= 1:           
+                print('\nFound Genus > 0: %s\n' % (obj.name))
+                self.include_list[name].genus_issue = True
+            #if mesh_props.manifold == False:
+            #    print('\nFound Non-manifold Mesh: %s\n' % (obj.name))
+            #    self.include_list[name].non_manifold = True
             if ((mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals') and mesh_props.components == 1): 
                 print('\nFixing Single Flawed Mesh: %s\n' % (contour_name))
                 name = obj.name
@@ -920,10 +934,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 mesh_props = bpy.context.scene.mcell.meshalyzer
                 if (mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals'):
                     print('\nMesh Still Flawed: %s\n' % (contour_name))
-                    self.include_list[name].non_manifold = True
+                    #self.include_list[name].non_manifold = True
                 else:
                     print('\nMesh Successfully Fixed: %s\n' % (contour_name))
-                    self.include_list[name].non_manifold = False
+                    #self.include_list[name].non_manifold = False
 
             if os.path.isfile(out_file + '/'+ name + '_tiles.rawc'):
                 os.remove(out_file + '/'+ name + '_tiles.rawc')
@@ -946,6 +960,9 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 if mesh_props.components >1:
                     print('\nFound Multi-component Mesh: %s\n' % (obj.name))
                     self.include_list[name].multi_component = True
+                if mesh_props.genus  >= 1:           
+                    print('\nFound Genus > 0: %s\n' % (obj.name))
+                    self.include_list[name].genus_issue = True
                 if ((mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals') and mesh_props.components == 1): 
                     print('\nFound Flawed Mesh: %s\n' % (obj.name))
                     m = obj.data
@@ -989,6 +1006,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         print("\nMulti-component meshes:\n")
         for item in self.include_list:
             if item.multi_component == True:
+                print(item.name) 
+
+        print("\nGenus > 0:\n")
+        for item in self.include_list:
+            if item.genus_issue == True:
                 print(item.name) 
 
         #for i in range(int(self.min_section), int(self.max_section)+1):
@@ -1124,11 +1146,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 sp_obj_file_name = cwd + '/' + sp_obj_name + ".obj"
                 sp_mdl_file_name = cwd + '/' + sp_obj_name + ".mdl"
                 #sp_mdl_file_name_2 = cwd + '/' + sp_obj_name + "_2.mdl"
-                sp_mdl_with_tags_file_name = cwd + '/' + sp_obj_name + "_tagged_1.mdl"
+                sp_mdl_with_tags_file_name = cwd + '/' + sp_obj_name + "_tagged.mdl"
                 sp_mdl_with_tags_file_name_2 = cwd + '/' + sp_obj_name + "_tagged_2.mdl"
                 sp_mdl_with_tags_file_name_3 = cwd + '/' + sp_obj_name + "_tagged_3.mdl"
                 sp_mdl_with_tags_file_name_4 = cwd + '/' + sp_obj_name + "_tagged_4.mdl"
-                sp_mdl_with_tags_file_obj = cwd + '/' + sp_obj_name + "_tagged_1.obj"
+                sp_mdl_with_tags_file_obj = cwd + '/' + sp_obj_name + "_tagged.obj"
                 sp_mdl_with_tags_file_obj_2 = cwd + '/' + sp_obj_name + "_tagged_2.obj"
                 sp_mdl_with_tags_file_obj_3 = cwd + '/' + sp_obj_name + "_tagged_3.obj"
                 c_obj_file_name = cwd + '/' + c_obj_name + ".obj"
@@ -1159,6 +1181,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     bpy.ops.export_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_file_name)
                     bpy.ops.object.select_all(action='DESELECT')
                     c_obj = scn.objects.get(c_obj_name)
+                    print(c_obj_name)
                     print("found c object: " + c_obj.name) 
                     if c_obj != None:
                         # now select and export the "c" object:
@@ -1213,6 +1236,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                 item2 = item[:-2]
                                 #concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_obj_name + "_tagged_" + str(i) + ".mdl", c_obj_name + "_regions_" + str(i) + ".mdl", sp_obj_name + "_tagged_" + ".mdl") 
                                 #subprocess.check_output([concat_cmd],shell=True)
+                                print("i", i)
                                 print('tag obj:',sp_mdl_with_tags_file_name)
                                 append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_with_tags_file_name, cwd + '/' + c_obj_name + "_regions.mdl", cwd + '/' + sp_obj_name + "_tagged_"+ str(i) + ".mdl")
                                 subprocess.check_output([append_cmd],shell=True)
@@ -1221,6 +1245,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                 bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath= cwd + '/' +sp_obj_name + "_tagged_"+ str(i)+ ".mdl")
                                 obje = scn.objects[sp_obj_name]
                                 obje.processor.smoothed = True
+                                obje.processor.multi_synaptic = True
                                 #obje.processor.newton = True
                 elif len(reg_list)==2:
                     print(i)								
@@ -1262,7 +1287,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                 bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath= sp_mdl_with_tags_file_name_3)
                                 obje = scn.objects[sp_obj_name]
                                 obje.processor.smoothed = True
-                               #obje.processor.newton = True
+                                obje.processor.multi_synaptic = True
 
                 else:
                     print(i)								
@@ -1305,6 +1330,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                 bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath= sp_mdl_with_tags_file_name_4)
                                 obje = scn.objects[sp_obj_name]
                                 obje.processor.smoothed = True
+                                obje.processor.multi_synaptic = True
 
             else: 
                 obje = scn.objects[sp_obj_name]
@@ -1453,7 +1479,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                     bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=sp_mdl_with_tags_file_name + "_"+ str(i))
                                     obje = scn.objects[sp_obj_name]
                                     obje.processor.smoothed = True
-                                    obje.processor.newton = True
+                                    obje.processor.multi_synaptic = True
 
                    
                 else: 
