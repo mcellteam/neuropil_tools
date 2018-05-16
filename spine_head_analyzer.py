@@ -220,6 +220,17 @@ class NEUROPIL_OT_calculate_diameter(bpy.types.Operator):
         return{'FINISHED'}
 
 
+class NEUROPIL_OT_calculate_diameter_head(bpy.types.Operator):
+    bl_idname = "spine_head_analyzer.calculate_diameter_head"
+    bl_label = "Calculate diameter (head)"
+    bl_description = "Calculate diameter of spine head"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        context.object.spine_head_ana.calculate_diameter_head(context)
+        return{'FINISHED'}
+
+
 
 class NEUROPIL_OT_recompute_volumes(bpy.types.Operator):
     bl_idname = "spine_head_analyzer.recompute_volumes"
@@ -279,7 +290,7 @@ class NEUROPIL_OT_output(bpy.types.Operator):
         outfilename = path + blendfilename2 + '_' + day + '.txt'
         if bpy.data.filepath != None:
             dend_outFile = open(outfilename, 'wt')
-            dend_outFile.write('# obj sy pre_post head_vol spine_vol neck_vol computed_area region_area\n')
+            dend_outFile.write('# sy pre_post head_vol spine_vol neck_vol computed_area region_area dia_head_max dia_head_min dia_neck_max dia_neck_min\n')
             dends = bpy.context.scene.test_tool.spine_namestruct_name.replace('#', '[0-9]')
             dend_filter = dends
             dend_objs = [obj for obj in context.scene.objects if re.match(dend_filter,obj.name) != None]   
@@ -294,7 +305,7 @@ class NEUROPIL_OT_output(bpy.types.Operator):
 
         else:
             dend_outFile = open(outfilename, 'wt')
-            dend_outFile.write('# obj sy pre_post head_vol spine_vol neck_vol computed_area region_area\n')
+            dend_outFile.write('# sy pre_post head_vol spine_vol neck_vol computed_area region_area\n')
             dends = bpy.context.scene.test_tool.spine_namestruct_name.replace('#', '[0-9]')
             dend_filter = dends
             dend_objs = [obj for obj in context.scene.objects if re.match(dend_filter,obj.name) != None]
@@ -422,6 +433,11 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
     diameter_neck_lbt = FloatProperty(name="Diameter of Neck based on area_neck_cross_section_lbt",default=0.0)
     length_neck = FloatProperty(name="Length of Neck based on volume_neck/area_neck_cross_section",default=0.0)
     length_neck_lbt = FloatProperty(name="Length of Neck based on distance from base to top",default=0.0)
+    diameter_head_max = FloatProperty(name="Diameter of Head",default=0.0)
+    diameter_head_min = FloatProperty(name="Diameter of Head",default=0.0)
+    diameter_head_lbt = FloatProperty(name="Diameter of Head based on area_neck_cross_section_lbt",default=0.0)
+    length_head = FloatProperty(name="Length of Head based on volume_neck/area_neck_cross_section",default=0.0)
+    length_head_lbt = FloatProperty(name="Length of Head based on distance from base to top",default=0.0)
     psd_az_location = FloatVectorProperty(name="Location of PSD or AZ",default=(0.0,0.0,0.0))
     neck_top_location = FloatVectorProperty(name="Location of Top of Spine Neck",default=(0.0,0.0,0.0))
     neck_base_location = FloatVectorProperty(name="Location of Base of Spine Neck",default=(0.0,0.0,0.0))
@@ -467,6 +483,11 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
         self.diameter_neck_lbt = 0.0
         self.length_neck = 0.0
         self.length_neck_lbt = 0.0
+        self.diameter_head_max = 0.0
+        self.diameter_head_min = 0.0
+        self.diameter_head_lbt = 0.0
+        self.length_head = 0.0
+        self.length_head_lbt = 0.0
         self.compute_psd_az_location(context)
         self.neck_top_location = (0.0,0.0,0.0)
         self.neck_base_location = (0.0,0.0,0.0)
@@ -571,6 +592,15 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
         bpy.ops.mesh.select_all(action='DESELECT')
         reg = obj.mcell.regions.region_list[self.neck_name]
         reg.select_region_faces(context)
+
+    def select_sph(self, context):
+        # For this spine head, select faces of this PSD:
+        obj = context.active_object
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.reveal()
+        bpy.ops.mesh.select_all(action='DESELECT')
+        reg = obj.mcell.regions.region_list[self.head_name]
+        reg.select_region_faces(context)
       
 
     def calculate_diameter(self, context):
@@ -629,6 +659,64 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
         #print(middle_seg)
         self.diameter_neck_max = float(max_diameter)
         self.diameter_neck_min = float(min_diameter)
+
+    def calculate_diameter_head(self, context):
+        self.select_sph(context)
+        mesh = context.active_object.data
+        old_to_new_index = dict()
+        selected_vertices = list()
+        selected_faces = list()
+        required_vertices = set()
+
+        for face in mesh.polygons:
+            if face.select:
+                required_vertices.add(face.vertices[0])
+                required_vertices.add(face.vertices[1])
+                required_vertices.add(face.vertices[2])
+        for i, vertex in enumerate(mesh.vertices):
+            if i in required_vertices:
+                old_to_new_index[i] = len(selected_vertices)
+                selected_vertices.append(vertex)
+        for face in mesh.polygons:
+            if face.select:
+                newa = old_to_new_index[face.vertices[0]] + 1
+                newb = old_to_new_index[face.vertices[1]] + 1
+                newc = old_to_new_index[face.vertices[2]] + 1
+                selected_faces.append((newa, newb, newc))
+
+        cwd = bpy.path.abspath(os.path.dirname(__file__))
+        tmp_obj = cwd + "/tmp.obj"
+        exe = bpy.path.abspath(cwd + "/calc_diameter")
+
+        with open(tmp_obj, "w+") as of:
+            for vertex in selected_vertices:
+                of.write("v %f %f %f\n" % (vertex.co.x, vertex.co.y, vertex.co.z))
+            for p1, p2, p3 in selected_faces:
+                of.write("f %d %d %d\n" % (p1, p2, p3))
+
+        subprocess.call([exe, tmp_obj, cwd + "/"])
+
+        # [1:] means ignore the first row "# Segments: N"
+        diam_fn = cwd + "/tmp_diameters.txt"
+
+        #metrics = [line.split() for line in open(diam_fn)][1:]
+        sort = []
+        for line in open(diam_fn):
+            metrics = line.strip()
+            sort.append(metrics)
+
+        sort = sort[1:]
+        len_sort = len(sort)
+        #val = (len_sort/2)-1
+    
+        sort.sort(reverse=True)
+        max_diameter = sort[0]
+        min_diameter = sort[-1]
+        #middle_seg = sort[int(val)]
+        #print(middle_seg)
+        self.diameter_head_max = float(max_diameter)
+        self.diameter_head_min = float(min_diameter)
+
 
 
     def compute_neck_stats(self, context):
@@ -949,14 +1037,18 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 #            (self.psd_az_location[1] == 0.0) and \
 #            (self.psd_az_location[2] == 0.0):
 #              self.compute_psd_az_location(context)
-        file.write('%s'  % (obj.name))
-        file.write(' %s' % (self.name))
+        #file.write('%s'  % (obj.name))
+        file.write('%s' % (self.name))
         file.write(' %s' % (self.char_postsynaptic))
         file.write(' %g' % (self.volume))
         file.write(' %g' % (self.volume_spine))
         file.write(' %g' % (self.volume_neck))
         file.write(' %g' % (self.area_head))
         file.write(' %g' % (self.area_psd_az))
+        file.write(' %g' % (self.diameter_head_max))
+        file.write(' %g' % (self.diameter_head_min))
+        file.write(' %g' % (self.diameter_neck_max))
+        file.write(' %g' % (self.diameter_neck_min))
         file.write('\n')
 
 
@@ -1586,6 +1678,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
     make_shell_spine_opt = BoolProperty(name="Make Spine Shell?", default=True)
     set_head_mat_opt = BoolProperty(name="Set Spine Head Material?", default=False)
     diameter_neck = FloatProperty(name="Diameter of Neck",default=0.0)
+    diameter_head = FloatProperty(name="Diameter of Head",default=0.0)
     initialized = BoolProperty(name = "Full Object Region", default = False)
 
 
@@ -1817,6 +1910,10 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                             psd.compute_volume(context,mode,self.n_components,self.make_shell_head_opt)
                             print('  Updated volume of %s  head: %g' % (head_region_name, psd.volume))
                             report_file.write('  Updated volume of %s  head: %g\n' % (head_region_name, psd.volume))
+                            psd.calculate_head_diameter(context)
+                            head_region_name = psd_region_name.replace(name, inner_obj_name)
+                            report_file.write('  Updated diameter and length of head %s  max diameter: %g  min diameter: %g  length: %g\n' % (head_region_name, psd.diameter_head_max, psd.diameter_head_min, psd.length_head))
+
 
                     if psd.area_spine == 0.0:
                         reg = reg_list.get(spine_region_name)
@@ -1840,7 +1937,8 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                     print('  ***** Negative neck volume for PSD %s %g' % (psd_region_name, psd.volume_neck))
                     report_file.write('  ***** Negative neck volume for PSD %s %g\n' % (psd_region_name, psd.volume_neck))
                 if (psd.volume_neck > 0.0):
-                    psd.compute_neck_stats(context)
+                    #psd.compute_neck_stats(context)
+                    psd.calculate_diameter(context)
                     neck_region_name = psd_region_name.replace(name, inner_obj_name)
                     report_file.write('  Updated diameter and length of neck %s  max diameter: %g  min diameter: %g  length: %g\n' % (neck_region_name, psd.diameter_neck_max, psd.diameter_neck_min, psd.length_neck))
                   
@@ -1861,6 +1959,13 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
         psd, psd_region_name = self.get_active_psd(context)
         if psd != None:
             psd.calculate_diameter(context)
+
+
+
+    def calculate_diameter_head(self, context):
+        psd, psd_region_name = self.get_active_psd(context)
+        if psd != None:
+            psd.calculate_diameter_head(context)
 
 
     def output(self,context, obj, file):
@@ -1910,7 +2015,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                           active_obj.mcell.regions, "region_list",
                           self, "active_psd_region_index",
                           rows=2)            
-            psd, psd_region_name = self.get_active_psd(context)   
+            psd, psd_region_name = self.get_active_psd(context)  
             #row = layout.row()
             #row.prop(self,"make_shell_head_opt",text="Make Meta Region Shell")
             #row = layout.row()
@@ -1925,8 +2030,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                 row.operator("spine_head_analyzer.generate_mock_psd", text = "Initialize Region")
             row = layout.row()
             row.operator("spine_head_analyzer.remove_mock_psd", text = "Remove Initialized Region")
-            row = layout.row()
-            row.operator("spine_head_analyzer.output", text="Output")
+
             if psd != None:
                 if psd.char_postsynaptic:
                     #row = layout.row()
@@ -1938,6 +2042,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                     row.operator("spine_head_analyzer.compute_volume", text="Compute Inner Volume")
                     row.enabled = (mesh.total_face_sel > 0)
                     row.operator("spine_head_analyzer.compute_volume_spine", text="Compute Outer Volume")
+                    row = layout.row()
                     if (psd.volume != 0.0):
                         row = layout.row()
                         row.label(text="Inner Volume: %.4g um^3" % (psd.volume)) 
@@ -1945,19 +2050,30 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                         row.label(text ="Inner Volume Surface Area: %.4g um^3" % (psd.area_head))
                         row = layout.row()
                         row.label(text ="Region Surface Area: %.4g um^3" % (psd.area_psd_az))
+                        row = layout.row()
+                        row.operator("spine_head_analyzer.calculate_diameter_head", text="Calculate Head Diameter")
+                        if (psd.diameter_head_max != 0.0):
+                            row = layout.row()
+                            row.label(text="      Max Head Diameter: %.5f um" % (psd.diameter_head_max))
+                            row = layout.row()
+                            row.label(text="      Min Head Diameter: %.5f um" % (psd.diameter_head_min))
                     if (psd.volume_neck != 0.0):                    
                         row = layout.row()
                         row.label(text="Intermediate Volume: %.4g um^3" % (psd.volume_neck))
+                        row = layout.row()
+                        row.operator("spine_head_analyzer.calculate_diameter", text="Calculate Neck Diameter")
+                        if (psd.diameter_neck_max != 0.0):
+                            row = layout.row()
+                            row.label(text="      Max Spine Diameter: %.5f um" % (psd.diameter_neck_max))
+                            row = layout.row()
+                            row.label(text="      Main Spine Diameter: %.5f um" % (psd.diameter_neck_min))
                     if (psd.volume_spine != 0.0):                    
                         row = layout.row()
                         row.label(text="Outer Volume: %.4g um^3" % (psd.volume_spine))
-                    #row = layout.row()
                     #row.label(text="Spine Neck List:", icon='MESH_ICOSPHERE')          
                     #if psd.neck_name != "": 
-                    #    row = layout.row()
-                    #    row.operator("spine_head_analyzer.calculate_diameter", text="Calculate Diameter")
-                    #    row = layout.row()
-                    #    row.label(text="Max Diameter: %.5f um" % (psd.diameter_neck_max))
-                    #    row = layout.row()
-                    #    row.label(text="Max Diameter: %.5f um" % (psd.diameter_neck_min))
+            row = layout.row()
+            row.operator("spine_head_analyzer.output", text="Output")
+
+
          
