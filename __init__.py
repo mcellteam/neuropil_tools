@@ -46,6 +46,7 @@ if "bpy" in locals():
     import imp
     imp.reload(io_import_multiple_objs)
     imp.reload(processor_tool)
+    imp.reload(contour_vesicle_importer)
     imp.reload(spine_head_analyzer)
     imp.reload(connectivity_tool)
 
@@ -55,6 +56,7 @@ else:
     from . import \
         io_import_multiple_objs, \
         processor_tool, \
+        contour_vesicle_importer, \
 	spine_head_analyzer, \
         connectivity_tool
 
@@ -72,6 +74,10 @@ def register():
     bpy.types.Object.processor = bpy.props.PointerProperty(
         type=processor_tool.ProcessorToolObjectProperty)
 
+    # Extend the metadata of bpy.types.Object with our Contour/Vesicle metadata
+    bpy.types.Object.contour_vesicle = bpy.props.PointerProperty(
+        type=contour_vesicle_importer.ContourVesicleObjectProperty)
+
    # Extend the metadata of bpy.types.Object with our Jaccard Tool metadata
     #bpy.types.Object.jaccard_obj = bpy.props.PointerProperty(
     #    type=jaccard_tool.JaccardToolObjectProperty)
@@ -88,10 +94,13 @@ def register():
     bpy.types.Scene.test_tool = bpy.props.PointerProperty(
         type=processor_tool.ProcessorToolSceneProperty)
 
+    # Extend the metadata of bpy.types.Scene with our Contour/Vesicle metadata
+    bpy.types.Scene.contour_vesicle = bpy.props.PointerProperty(
+        type=contour_vesicle_importer.ContourVesicleSceneProperty)
+
     # Extend the metadata of bpy.types.Scene with our Volumetric Analysis metadata
     bpy.types.Scene.volume_analyzer = bpy.props.PointerProperty(
         type=spine_head_analyzer.SpineHeadAnalyzerSceneProperty)
-
 
 
     print("Neuropil Tools registered")
