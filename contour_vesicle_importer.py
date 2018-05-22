@@ -361,7 +361,7 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
             if bpy.data.objects.get(contour_name) is None:
                 obj_file = ser_dir + '/' + contour_name + '.obj'
                 if self.vesicle_import:
-                  recon2obj_cmd = "recon2obj -vesicles -object %s %s %s %s > %s" % (contour_name, ser_file_basename, self.min_section, self.max_section, obj_file)
+                  recon2obj_cmd = "recon2obj -vesicles -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
                 else:
                   recon2obj_cmd = "recon2obj -object %s %s %s %s > %s" % (contour_name, ser_file_basename, self.min_section, self.max_section, obj_file)
                 subprocess.check_output([recon2obj_cmd],shell=True)
