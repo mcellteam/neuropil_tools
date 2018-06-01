@@ -165,7 +165,7 @@ class NEUROPIL_PT_ContourVesicleImporter(bpy.types.Panel):
 
 
 #layout object lists
-class Contour_UL_draw_item(bpy.types.UIList):
+class Contour_Ves_UL_draw_item(bpy.types.UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data,
                  active_propname, index):
@@ -176,7 +176,7 @@ class Contour_UL_draw_item(bpy.types.UIList):
         layout.label(item.name)
 
 
-class Include_UL_draw_item(bpy.types.UIList):
+class Include_Ves_UL_draw_item(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
@@ -379,11 +379,11 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         row.label(text="Contour List:", icon='CURVE_DATA')
         row.label(text="Include List:", icon='MESH_ICOSPHERE')
         row = layout.row()
-        row.template_list("Contour_UL_draw_item","contours_in_ser_file",
+        row.template_list("Contour_Ves_UL_draw_item","contours_in_ser_file",
                           bpy.context.scene.contour_vesicle, "contour_list",
                           self, "active_contour_index",
                           rows=2)
-        row.template_list("Include_UL_draw_item","included_in_ser_file",
+        row.template_list("Include_Ves_UL_draw_item","included_in_ser_file",
                           bpy.context.scene.contour_vesicle, "include_list",
                           self, "active_include_index",
                           rows=2)

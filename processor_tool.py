@@ -643,8 +643,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     spine_namestruct_name = StringProperty("Set object name structure", default = "")          
     PSD_namestruct_name = StringProperty("Set metadata name structure", default = "")
     central_namestruct_name = StringProperty("Set central object name structure", default = "d##")
-    spine = StringProperty(name = "Differentiates Spine", default = "")
-    psd = StringProperty(name = "Differentiates PSD",default = "")
+    spine_name = StringProperty(name = "Differentiates Spine", default = "")
+    psd_name = StringProperty(name = "Differentiates PSD",default = "")
     min_section = StringProperty(name="Minimum Reconstruct Section File", default= "")
     max_section = StringProperty(name="Maximum Reconstruct Section File", default= "")
     section_thickness = StringProperty(name="Maximum Reconstruct Section File", default= "0.05")
@@ -1187,6 +1187,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 print('PRINT NAMES: ', sp_obj_name)
                 sp_obj = scn.objects.get(sp_obj_name)
                 sp_obj.processor.namestruct = self.spine_namestruct_name
+    
             #print(type(sp_obj_name), type(c_obj_name))
                 if (sp_obj != None) and (sp_obj.processor.smoothed == True) and (self.include_list[sp_obj.name].non_manifold == False):
             #INDENT THE FOLLOWING:    
