@@ -28,6 +28,6 @@ clean:
 
 
 install: neuropil_tools.zip
-	@ mkdir -p $(INSTALL_DIR)
+	@ mkdir -p $(INSTALL_DIR)/
 	@ unzip -o neuropil_tools.zip -d $(INSTALL_DIR); \
 

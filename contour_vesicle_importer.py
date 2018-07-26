@@ -256,15 +256,18 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
 
         ser_data = open(ser_prefix[:-4] + ".ser", "r").read()
         self.min_section = first_re.search(ser_data).group(1)
-        self.min_section = str(int(self.min_section) +1)
+        self.min_section = str(int(self.min_section))
         self.max_section = last_re.search(ser_data).group(1)
-        self.max_section = str(int(self.max_section)- 1)
+        self.max_section = str(int(self.max_section))
         self.section_thickness = default_thick_re.search(ser_data).group(1)
+        print("First Section:  %s" % (self.min_section))
+        print("Last Section:  %s" % (self.max_section))
+        print("Section Thickness:  %s" % (self.section_thickness))
 
         contour_re = compile('Contour\ name=\"(.*?)\"')
 
         all_names = []
-        for i in range(int(self.min_section), int(self.max_section)):
+        for i in range(int(self.min_section), int(self.max_section)+1):
             print(i)
             all_names += contour_re.findall(open(ser_prefix[:-3] + str(i)).read())
          # Now put each item in this python list into a Blender collection property
@@ -363,7 +366,8 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
                 if self.vesicle_import:
                   recon2obj_cmd = "recon2obj -vesicles -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
                 else:
-                  recon2obj_cmd = "recon2obj -object %s %s %s %s > %s" % (contour_name, ser_file_basename, self.min_section, self.max_section, obj_file)
+                  recon2obj_cmd = "recon2obj -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
+                print("Executing: %s" % (recon2obj_cmd))
                 subprocess.check_output([recon2obj_cmd],shell=True)
             #import obj
                 bpy.ops.import_scene.obj(filepath=obj_file, axis_forward='Y', axis_up="Z")
