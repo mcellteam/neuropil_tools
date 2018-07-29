@@ -1974,9 +1974,9 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                         row.operator("spine_head_analyzer.calculate_diameter", text="Calculate Neck Diameter")
                         if (psd.diameter_neck_max != 0.0):
                             row = layout.row()
-                            row.label(text="      Max Spine Diameter: %.5f um" % (psd.diameter_neck_max))
+                            row.label(text="      Max Neck Diameter: %.5f um" % (psd.diameter_neck_max))
                             row = layout.row()
-                            row.label(text="      Main Spine Diameter: %.5f um" % (psd.diameter_neck_min))
+                            row.label(text="      Min Neck Diameter: %.5f um" % (psd.diameter_neck_min))
                     if (psd.volume_spine != 0.0):                    
                         row = layout.row()
                         row.label(text="Outer Volume: %.4g um^3" % (psd.volume_spine))

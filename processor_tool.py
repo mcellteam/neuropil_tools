@@ -69,6 +69,7 @@ def unregister():
 
 trace_filter_name = ""
 
+
 class NEUROPIL_OT_impser(bpy.types.Operator, ImportHelper):
     """Import from RECONSTRUCT Series file format (.ser)"""
     bl_idname = "processor_tool.impser"
@@ -128,6 +129,7 @@ class NEUROPIL_OT_psd_namestruct(bpy.types.Operator):
         context.scene.test_tool.PSD_namestruct(context, self.PSD_namestruct_name)
         return {'FINISHED'}   
 
+
 class NEUROPIL_OT_central_namestruct(bpy.types.Operator):
     bl_idname = "processor_tool.central_namestruct"
     bl_label = "Define Name for Central (shaft) Object"    
@@ -146,8 +148,6 @@ class NEUROPIL_OT_central_namestruct(bpy.types.Operator):
         context.scene.test_tool.central_namestruct(context, self.central_namestruct_name)
 
         return {'FINISHED'}   
-
-
 
 
 class NEUROPIL_OT_include_contour(bpy.types.Operator):
@@ -182,6 +182,7 @@ class NEUROPIL_OT_remove_contour(bpy.types.Operator):
         context.scene.test_tool.remove_contour(context)
         return {'FINISHED'}
 
+
 class NEUROPIL_OT_remove_contour_all(bpy.types.Operator):
     bl_idname = "processor_tool.remove_contour_all"
     bl_label = "Clear All Contours from Trace List"
@@ -191,6 +192,7 @@ class NEUROPIL_OT_remove_contour_all(bpy.types.Operator):
     def execute(self, context):
         context.scene.test_tool.remove_contour_all(context)
         return {'FINISHED'}
+
 
 class NEUROPIL_OT_remove_comp(bpy.types.Operator):
     bl_idname = "processor_tool.remove_components"
@@ -288,8 +290,6 @@ class NEUROPIL_OT_smooth_all(bpy.types.Operator):
     bl_description = "Smooth All"
     bl_options = {'REGISTER', 'UNDO'}
   
-    spine_namestruct_name = StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
-
     def execute(self, context):
         context.scene.test_tool.smooth_all(context)
         return {'FINISHED'}
@@ -300,8 +300,6 @@ class NEUROPIL_OT_tag_psds(bpy.types.Operator):
     bl_label = "Assign PSD Region"
     bl_description = "Assign PSD Region"
     bl_options = {'REGISTER', 'UNDO'}
-
-    spine_namestruct_name = StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
 
     def execute(self, context):
         context.scene.test_tool.tag_psds(context,"double")
@@ -318,7 +316,6 @@ class NEUROPIL_OT_merge_objs(bpy.types.Operator):
     def execute(self, context):
         context.scene.test_tool.merge_objs(context)
         return {'FINISHED'}
-
 
 
 class NEUROPIL_OT_tag_psd_single(bpy.types.Operator):
@@ -390,7 +387,6 @@ class Trace_UL_draw_item(bpy.types.UIList):
         layout.label(item.name)
 
 
-
 class Include_UL_draw_item(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data,
@@ -410,13 +406,13 @@ class Include_UL_draw_item(bpy.types.UIList):
             layout.label(item.name)
 
 
-
 class SCN_UL_obj_draw_item(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
         scn = bpy.context.scene
 
-        '''var_split_re = re.compile('#+|@+')
+        '''
+        var_split_re = re.compile('#+|@+')
 
         num_re = re.compile('#')
         alpha_re = re.compile('@')
@@ -434,11 +430,12 @@ class SCN_UL_obj_draw_item(bpy.types.UIList):
         if len(base_pat_const) > len(base_pat_var):
             bpat = bpat + base_pat_const[i]
 
-
         base_pat_expr = num_re.sub('[0-9]',bpat)
         base_pat_expr = alpha_re.sub('[a-zA-Z]',base_pat_expr)
         base_pat_expr = star_re.sub('.*?',base_pat_expr)
-        base_pat_re = re.compile(base_pat_expr)'''
+        base_pat_re = re.compile(base_pat_expr)
+        '''
+
         self.filter_name = scn.test_tool.filt
         self.use_filter_sort_alpha = True
         if item.processor.multi_synaptic == True:
@@ -461,6 +458,7 @@ class SCN_TestTool(bpy.types.Panel):
     def draw(self, context):
         if context.scene != None:
             context.scene.test_tool.draw_panel(context, panel=self)
+
 
 class SCN_TextEntry(bpy.types.Panel):
     bl_label = "Test"
@@ -494,10 +492,8 @@ class IncludeNameSceneProperty(bpy.types.PropertyGroup):
     PSD_filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
     problem = BoolProperty(name = "Problem Tagging", default = False)
     
-    
     def init_include(self,context,name):
         self.name = name
-
 
 
 class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
@@ -510,12 +506,6 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
     multi_synaptic = BoolProperty(name = "Multiple Synapses", default = False)
     fix_all_fail = BoolProperty(name = "Failed to Fix Obj", default = False)
     namestruct = StringProperty("Base and Meta Object Struct", default = "")          
-    
-
-    #def init_obje(self,context,name):
-    #    self.name = name
-
-
 
     def select_obje(self, context, obje):
         if context.active_object is not None:
@@ -593,8 +583,6 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
         self.n_components = n_components
 
 
-
-
     def smooth(self, context):
         """ Smooth using GAMer """
         print('Smoothing: %s' % (context.active_object.name))
@@ -605,6 +593,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
         gamer_mip.smooth_iter = 10
         gamer_mip.preserve_ridges = True
         bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.beautify_fill()
         bpy.ops.mesh.subdivide(number_cuts=2)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
@@ -628,7 +617,6 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
         return('FINISHED')
 
 
-
 class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     active_sp_index = IntProperty(name="Active Spine Object Index", default=0)
     active_c_index = IntProperty(name="Active Contact Object Index", default=0)
@@ -640,8 +628,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     active_include_index = IntProperty(name="Active Include Index", default=0)
     new = BoolProperty(name = "Imported MDL Object", default = False)
     filepath = StringProperty(name = "Remember Active Filepath", default= "")
-    spine_namestruct_name = StringProperty("Set object name structure", default = "")          
-    PSD_namestruct_name = StringProperty("Set metadata name structure", default = "")
+    spine_namestruct_name = StringProperty("Set object name structure", default = "d##sp##")          
+    PSD_namestruct_name = StringProperty("Set metadata name structure", default = "d##c##")
     central_namestruct_name = StringProperty("Set central object name structure", default = "d##")
     spine_name = StringProperty(name = "Differentiates Spine", default = "")
     psd_name = StringProperty(name = "Differentiates PSD",default = "")
@@ -649,19 +637,21 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     max_section = StringProperty(name="Maximum Reconstruct Section File", default= "")
     section_thickness = StringProperty(name="Maximum Reconstruct Section File", default= "0.05")
     match_list = CollectionProperty(type = ContourNameSceneProperty, name = "Match List")
-    filt = StringProperty(name = "Filter for Object list", default = "")
+    filt = StringProperty(name = "Filter for Object list", default = "d[0-9][0-9]sp[0-9][0-9]")
     #c_obj_name_list = CollectionProperty(name = "
 
     #contour_name = StringProperty(name="Contour Name", default = "")
     
+
     def spine_namestruct(self, context, spine_namestruct_name):
         self.spine_namestruct_name = spine_namestruct_name
         self.filt = self.spine_namestruct_name.replace('#','[0-9]')
-        print("CHANGE NAME", self.filt)
+        print("CHANGED NAME FILTER", self.filt)
+
 
     def PSD_namestruct(self, context, PSD_namestruct_name):
         self.PSD_namestruct_name = PSD_namestruct_name
-        
+
 
     def central_namestruct(self, context, central_namestruct_name):
         self.central_namestruct_name = central_namestruct_name
@@ -700,8 +690,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         self.max_section = last_re.search(ser_data).group(1)
         self.max_section = str(int(self.max_section)- 1)
         self.section_thickness = default_thick_re.search(ser_data).group(1)
-    
-
 
         contour_re = compile('Contour\ name=\"(.*?)\"')
 
@@ -726,6 +714,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     #    else:
     #        contour = 
 
+
     def include_filter_contour(self,context):
         for item in self.contour_list:
             if ((re.search(trace_filter_name, item.name)) or (re.search(trace_filter_name, item.name)))  and item.name not in self.include_list:
@@ -733,12 +722,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         return(self.include_list)
 
 
-
     def include_contour(self, context):
         name = self.contour_list[self.active_contour_index].name
         if name not in self.include_list:
             self.add_contour(context, name, "include")
         return(self.include_list)
+
 
     def remove_contour(self, context):
         #for name in self.contour_list:
@@ -771,6 +760,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                
         return(self.include_list)
 
+
     def remove_contour_all(self, context):
         #for name in self.contour_list:
         #name = self.include_list[self.active_include_index].name
@@ -784,6 +774,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                
         return(self.contour_list)
 
+
     def remove_components(self,context):
         scn = bpy.context.scene
         contour = self.include_list[self.active_include_index]
@@ -791,10 +782,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         self.include_list[contour_name].multi_component == False
 
 
-
     #def generate_mesh_object(self, context)
     #     for item in self.include_list:
     #         self.contourcontour.generate_mesh_object(context,trace) 
+
 
     def generate_mesh_object(self, context):
         #set variables
@@ -813,7 +804,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             contour = "-I " + str(i.name) + " "  
             contour_name += contour        
         interpolate_cmd = "reconstruct_interpolate -i %s -f %s -o %s --min_section=%s --max_section=%s --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, contour_name, interp_file)
-        print('\nInterpolating series: \n%s\n' % (interpolate_cmd))
+        print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
         subprocess.check_output([interpolate_cmd],shell=True)
 
         #tile traces
@@ -822,6 +813,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             print('\nGenerating Mesh for: %s\n' % (contour_name))
             if bpy.data.objects.get(contour_name) is None:
                 tile_cmd = "ContourTilerBin -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
+                print('\nTiling Object: \n%s\n' % (tile_cmd))
                 subprocess.check_output([tile_cmd],shell=True)
             #make obj
                 raw2obj_cmd = "rawc2obj.py %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
@@ -850,10 +842,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         print(contour_name)
         obj = None
         interpolate_cmd = "reconstruct_interpolate -i %s -f %s -o %s --min_section=%s --max_section=%s --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 -I %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, contour_name, interp_file)
+        print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
         subprocess.check_output([interpolate_cmd],shell=True)
 
         if bpy.data.objects.get(contour_name) is None:
             tile_cmd = "ContourTilerBin -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
+            print('\nTiling Object: \n%s\n' % (tile_cmd))
             subprocess.check_output([tile_cmd],shell=True)
             #make obj
             raw2obj_cmd = "rawc2obj.py %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
@@ -878,6 +872,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             if os.path.isfile(out_file + '/'+ name + '.obj'):
                 os.remove(out_file + '/'+ name + '.obj')
             tile_cmd = "ContourTilerBin -f ser -n %s -d %s -c %s -s  %s %s -z .05 -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, interp_file)
+            print('\nTiling Object: \n%s\n' % (tile_cmd))
             subprocess.check_output([tile_cmd],shell=True)
             #make obj
             raw2obj_cmd = "rawc2obj.py %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
@@ -1089,10 +1084,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         
         # 5. for each cfa object:
 
-
         scn = bpy.context.scene
         objs = scn.objects
-
 
         obj1 = self.spine_namestruct_name
         obj2 = self.PSD_namestruct_name
@@ -1116,7 +1109,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
         if len(base_pat_const) > len(base_pat_var):
             bpat = bpat + base_pat_const[i]
-
 
         print("THIS IS BPAT:", bpat)
 
@@ -1168,7 +1160,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 match_dict[bobj]= c_obj_list
         print('MATCHDICT:', match_dict)
 
-
         if mode != "single":
             for key, value in match_dict.items():
                 sp_obj_name = key
@@ -1182,7 +1173,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 #else:
                 #   print('FAILLLL')
                 c_obj_list = value
-
 
                 print('PRINT NAMES: ', sp_obj_name)
                 sp_obj = scn.objects.get(sp_obj_name)
@@ -1304,8 +1294,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 #bpy.ops.object.select_all(action='DESELECT')
                 #c_obj_name = obje.replace('sp', 'c')
 
-
-
         else:
             contour = scn.objects[self.active_sp_index]
             print(contour)
@@ -1335,7 +1323,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     print("SP OBJ KEY", sp_obj_name)
                     c_obj_list = value
                     print("C_OBJ_LIST", c_obj_list)
-
 
                     print('PRINT NAMES: ', sp_obj_name)
                     sp_obj = scn.objects.get(sp_obj_name)
@@ -1460,9 +1447,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 else: 
                     pass
 
-
-        
-
             else: 
                 obje = scn.objects[sp_obj_name]
                 self.include_list[obje.name].problem = True
@@ -1479,16 +1463,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
            #     for mtch in match_list:
            #         if mtch[1] == sp_obj_name:
            #             c_obj_name = mtch[0]
-
-
-                
-            
                     
                     #os.remove(sp_obj_file_name)
                     #os.remove(c_obj_file_name)
                     #os.remove(sp_mdl_file_name)
                     #os.remove(c_mdl_tag_file_name_2)
-  
                     
                     #os.remove(sp_obj_file_name)
                     #os.remove(c_obj_file_name)
@@ -1501,14 +1480,17 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 #os.remove(sp_mdl_with_tags_file_name) 
                 #os.remove(sp_mdl_with_tags_file_name_2)
 
-
             #os.remove(sp_mdl_with_tags_file_name) 
             #if os.path.exists(sp_mdl_with_tags_file_name_2) and os.path.getsize(sp_mdl_with_tags_file_name_2) > 0:
             #    os.path.remove(sp_mdl_with_tags_file_name_2)
 
 
     def smooth_all(self,context):
-        spine_name = self.spine_namestruct_name.replace('#','*')
+#        spine_name = self.spine_namestruct_name.replace('#','*')
+        num_re = re.compile('#')
+        spine_name = num_re.sub('[0-9]',self.spine_namestruct_name)
+        print('namestruct:  %s' % (self.spine_namestruct_name))
+        print('spine_name:  %s' % (spine_name))
         scn = bpy.context.scene
         the_list = [obje for obje in scn.objects if re.search(spine_name, obje.name)!= None]
         for obje in the_list:
@@ -1534,9 +1516,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         bpy.ops.mesh.reveal()
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.quads_convert_to_tris(quad_method = 'BEAUTY', ngon_method='BEAUTY')
-        
-
-
 
 
     #Draw panel

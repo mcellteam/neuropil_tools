@@ -74,10 +74,6 @@ def register():
     bpy.types.Object.processor = bpy.props.PointerProperty(
         type=processor_tool.ProcessorToolObjectProperty)
 
-    # Extend the metadata of bpy.types.Object with our Contour/Vesicle metadata
-    bpy.types.Object.contour_vesicle = bpy.props.PointerProperty(
-        type=contour_vesicle_importer.ContourVesicleObjectProperty)
-
    # Extend the metadata of bpy.types.Object with our Jaccard Tool metadata
     #bpy.types.Object.jaccard_obj = bpy.props.PointerProperty(
     #    type=jaccard_tool.JaccardToolObjectProperty)
