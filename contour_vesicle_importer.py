@@ -183,7 +183,10 @@ class Include_Ves_UL_draw_item(bpy.types.UIList):
         scn = bpy.context.scene
         self.use_filter_sort_alpha = True    
         if item.imported == True:
-            layout.label(item.name, icon='MESH_ICOSPHERE')
+            if item.vesicle_obj:
+              layout.label(item.name, icon='GROUP_VERTEX')
+            else:
+              layout.label(item.name, icon='COLLAPSEMENU')
         else:
             layout.label(item.name)
 
@@ -215,6 +218,7 @@ class ContourNameProperty(bpy.types.PropertyGroup):
 class IncludeNameProperty(bpy.types.PropertyGroup):
     name = StringProperty(name= "Include name", default ="")
     imported = BoolProperty(name = "Object Imported", default = False)
+    vesicle_obj = BoolProperty(name="OBJ is Vesicle", default=False)
     filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
 
     def init_include(self,context,name):
@@ -308,26 +312,29 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
     def remove_contour(self, context):
         #for name in self.contour_list:
         if (len(self.include_list) > 0):
-            name = self.include_list[self.active_include_index].name
+            if self.include_list[self.active_include_index].vesicle_obj:
+              obj_name = self.include_list[self.active_include_index].name
+            else:
+              obj_name = self.include_list[self.active_include_index].name+'_contours'
             ser_dir = os.path.split(self.filepath)[0]
             ser_file = os.path.split(self.filepath)[-1]
 
             ser_prefix = os.path.splitext(ser_file)[0]
             out_file = ser_dir + '/' + ser_prefix + "_output"
 
-            if bpy.data.objects.get(name) is not None:
+            if bpy.data.objects.get(obj_name) is not None:
                 bpy.ops.object.select_all(action='DESELECT')
-                obj = bpy.context.scene.objects[self.include_list[self.active_include_index].name]
+                obj = bpy.context.scene.objects[obj_name]
                 obj.select = True
                 context.scene.objects.active = obj
                 m = obj.data
                 context.scene.objects.unlink(obj)
                 bpy.data.objects.remove(obj)
                 bpy.data.meshes.remove(m)
-                if os.path.exists(out_file + '/'+ name + '_tiles.rawc'):
-                    os.remove(out_file + '/'+ name + '_tiles.rawc')
-                if os. path.exists(out_file + '/'+ name + '.obj'):
-                    os.remove(out_file + '/'+ name + '.obj')
+                if os.path.exists(out_file + '/'+ obj_name + '_tiles.rawc'):
+                    os.remove(out_file + '/'+ obj_name + '_tiles.rawc')
+                if os. path.exists(out_file + '/'+ obj_name + '.obj'):
+                    os.remove(out_file + '/'+ obj_name + '.obj')
             self.include_list.remove(self.active_include_index)
                
         return(self.include_list)
@@ -361,13 +368,21 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         #import contours
         for contour_name in import_list:
             print('\nImporting Contours for: %s\n' % (contour_name))
-            if bpy.data.objects.get(contour_name) is None:
-                obj_file = ser_dir + '/' + contour_name + '.obj'
+            if self.vesicle_import:
+                  check_obj_name = contour_name
+            else: 
+                  check_obj_name = contour_name + "_contours"
+            if bpy.data.objects.get(check_obj_name) is None:
                 if self.vesicle_import:
+                  self.include_list[contour_name].vesicle_obj = True
+                  obj_file = ser_dir + '/' + contour_name + '.obj'
                   recon2obj_cmd = "recon2obj -vesicles -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
+                  print("Importing as Vesicles: %s" % (recon2obj_cmd))
                 else:
+                  self.include_list[contour_name].vesicle_obj = False
+                  obj_file = ser_dir + '/' + contour_name + '_contours.obj'
                   recon2obj_cmd = "recon2obj -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
-                print("Executing: %s" % (recon2obj_cmd))
+                  print("Importing as Contours: %s" % (recon2obj_cmd))
                 subprocess.check_output([recon2obj_cmd],shell=True)
             #import obj
                 bpy.ops.import_scene.obj(filepath=obj_file, axis_forward='Y', axis_up="Z")
@@ -380,8 +395,8 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         row = layout.row()
         row.operator("contour_vesicle.impser", text="Import .ser file")  
         row = layout.row()
-        row.label(text="Contour List:", icon='CURVE_DATA')
-        row.label(text="Include List:", icon='MESH_ICOSPHERE')
+        row.label(text="Series Contour List:", icon='CURVE_DATA')
+        row.label(text="Import Include List:", icon='COLLAPSEMENU')
         row = layout.row()
         row.template_list("Contour_Ves_UL_draw_item","contours_in_ser_file",
                           bpy.context.scene.contour_vesicle, "contour_list",

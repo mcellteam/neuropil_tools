@@ -449,7 +449,7 @@ class SCN_UL_obj_draw_item(bpy.types.UIList):
 
 
 class SCN_TestTool(bpy.types.Panel):
-    bl_label = "Processor Tool"
+    bl_label = "3DEM Processor Tool"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_options = {'DEFAULT_CLOSED'}
