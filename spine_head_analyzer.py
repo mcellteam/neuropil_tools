@@ -629,7 +629,8 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 
         cwd = bpy.path.abspath(os.path.dirname(__file__))
         tmp_obj = cwd + "/tmp.obj"
-        exe = bpy.path.abspath(cwd + "/calc_diameter")
+#        exe = bpy.path.abspath(cwd + "/calc_diameter")
+        cmd = os.path.join(os.path.dirname(__file__), 'bin', 'calc_diameter')
 
         with open(tmp_obj, "w+") as of:
             for vertex in selected_vertices:
@@ -637,7 +638,7 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             for p1, p2, p3 in selected_faces:
                 of.write("f %d %d %d\n" % (p1, p2, p3))
 
-        subprocess.call([exe, tmp_obj, cwd + "/"])
+        subprocess.call([cmd, tmp_obj, cwd + "/"])
 
         # [1:] means ignore the first row "# Segments: N"
         diam_fn = cwd + "/tmp_diameters.txt"
@@ -686,7 +687,8 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 
         cwd = bpy.path.abspath(os.path.dirname(__file__))
         tmp_obj = cwd + "/tmp.obj"
-        exe = bpy.path.abspath(cwd + "/calc_diameter")
+#        exe = bpy.path.abspath(cwd + "/calc_diameter")
+        cmd = os.path.join(os.path.dirname(__file__), 'bin', 'calc_diameter')
 
         with open(tmp_obj, "w+") as of:
             for vertex in selected_vertices:
@@ -694,7 +696,7 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             for p1, p2, p3 in selected_faces:
                 of.write("f %d %d %d\n" % (p1, p2, p3))
 
-        subprocess.call([exe, tmp_obj, cwd + "/"])
+        subprocess.call([cmd, tmp_obj, cwd + "/"])
 
         # [1:] means ignore the first row "# Segments: N"
         diam_fn = cwd + "/tmp_diameters.txt"

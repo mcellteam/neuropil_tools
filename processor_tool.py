@@ -791,6 +791,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         #set variables
         ser_dir = os.path.split(self.filepath)[0]
         ser_file = os.path.split(self.filepath)[-1]
+        bin_dir = os.path.join(os.path.dirname(__file__), 'bin') 
+        interpolate_bin = os.path.join(bin_dir, 'reconstruct_interpolate') 
+        tile_bin = os.path.join(bin_dir, 'ContourTilerBin') 
+        rawc2obj_bin = os.path.join(bin_dir, 'rawc2obj.py')
 
         ser_prefix = os.path.splitext(ser_file)[0]
         out_file = ser_dir + '/' + ser_prefix + "_output"
@@ -803,7 +807,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         for i in self.include_list: 
             contour = "-I " + str(i.name) + " "  
             contour_name += contour        
-        interpolate_cmd = "reconstruct_interpolate -i %s -f %s -o %s --min_section=%s --max_section=%s --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, contour_name, interp_file)
+        
+        interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, contour_name, interp_file)
         print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
         subprocess.check_output([interpolate_cmd],shell=True)
 
@@ -812,12 +817,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             contour_name = str(i.name)
             print('\nGenerating Mesh for: %s\n' % (contour_name))
             if bpy.data.objects.get(contour_name) is None:
-                tile_cmd = "ContourTilerBin -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
+                tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
                 print('\nTiling Object: \n%s\n' % (tile_cmd))
                 subprocess.check_output([tile_cmd],shell=True)
             #make obj
-                raw2obj_cmd = "rawc2obj.py %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
-                subprocess.check_output([raw2obj_cmd],shell=True)
+                rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
+                subprocess.check_output([rawc2obj_cmd],shell=True)
             #import obj
                 bpy.ops.import_scene.obj(filepath=out_file + '/' + contour_name  + ".obj", axis_forward='Y', axis_up="Z")
                 self.include_list[str(contour_name)].generated = True
@@ -832,6 +837,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         ser_file = os.path.split(self.filepath)[-1]
         ser_prefix = os.path.splitext(ser_file)[0]
         out_file = ser_dir + '/' + ser_prefix + "_output"
+        bin_dir = os.path.join(os.path.dirname(__file__), 'bin') 
+        interpolate_bin = os.path.join(bin_dir, 'reconstruct_interpolate') 
+        tile_bin = os.path.join(bin_dir, 'ContourTilerBin') 
+        rawc2obj_bin = os.path.join(bin_dir, 'rawc2obj.py')
 
         if os.path.exists(out_file) == False:
             os.mkdir(out_file)
@@ -841,17 +850,17 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         contour_name  = contour.name
         print(contour_name)
         obj = None
-        interpolate_cmd = "reconstruct_interpolate -i %s -f %s -o %s --min_section=%s --max_section=%s --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 -I %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, contour_name, interp_file)
+        interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 -I %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, contour_name, interp_file)
         print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
         subprocess.check_output([interpolate_cmd],shell=True)
 
         if bpy.data.objects.get(contour_name) is None:
-            tile_cmd = "ContourTilerBin -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
+            tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
             print('\nTiling Object: \n%s\n' % (tile_cmd))
             subprocess.check_output([tile_cmd],shell=True)
             #make obj
-            raw2obj_cmd = "rawc2obj.py %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
-            subprocess.check_output([raw2obj_cmd],shell=True)
+            rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
+            subprocess.check_output([rawc2obj_cmd],shell=True)
             #import obj
             bpy.ops.import_scene.obj(filepath=out_file + '/' + contour_name  + ".obj", axis_forward='Y', axis_up="Z")
             obj = bpy.data.objects.get(contour_name)
@@ -871,12 +880,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 os.remove(out_file + '/'+ name + '_fix.rawc')
             if os.path.isfile(out_file + '/'+ name + '.obj'):
                 os.remove(out_file + '/'+ name + '.obj')
-            tile_cmd = "ContourTilerBin -f ser -n %s -d %s -c %s -s  %s %s -z .05 -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, interp_file)
+            tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z .05 -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, interp_file)
             print('\nTiling Object: \n%s\n' % (tile_cmd))
             subprocess.check_output([tile_cmd],shell=True)
             #make obj
-            raw2obj_cmd = "rawc2obj.py %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
-            subprocess.check_output([raw2obj_cmd],shell=True)
+            rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
+            subprocess.check_output([rawc2obj_cmd],shell=True)
             #import obj
             bpy.ops.import_scene.obj(filepath=out_file + '/' + contour_name  + ".obj", axis_forward='Y', axis_up="Z")
         #obj = bpy.context.scene.objects[contour_name]
@@ -895,6 +904,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         ser_file = os.path.split(self.filepath)[-1]
         ser_prefix = os.path.splitext(ser_file)[0]
         out_file = ser_dir + '/' + ser_prefix + "_output"
+        bin_dir = os.path.join(os.path.dirname(__file__), 'bin') 
+        rawc2obj_bin = os.path.join(bin_dir, 'rawc2obj.py')
+        fix_all_bin = os.path.join(bin_dir, 'volFixAll')
+
         print("Fix Mesh Out_file:", out_file)
 
         if os.path.exists(out_file) == False:
@@ -938,12 +951,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 bpy.data.meshes.remove(m)  
 
                 #fix mesh
-                fix_all_cmd = "volFixAll %s %s" % (out_file + '/' + name + "_tiles.rawc", out_file + '/'+ name + "_fix.rawc")  
+                fix_all_cmd = fix_all_bin + " %s %s" % (out_file + '/' + name + "_tiles.rawc", out_file + '/'+ name + "_fix.rawc")  
                 subprocess.check_output([fix_all_cmd], shell=True)
 
                 #make obj
-                raw2obj_cmd = "rawc2obj.py %s > %s" % (out_file + '/'+ name + '_fix.rawc', out_file + '/'+  name + ".obj")
-                subprocess.check_output([raw2obj_cmd],shell=True)
+                rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ name + '_fix.rawc', out_file + '/'+  name + ".obj")
+                subprocess.check_output([rawc2obj_cmd],shell=True)
 
                 #import obj
                 bpy.ops.import_scene.obj(filepath=out_file + '/' + name  + ".obj", axis_forward='Y', axis_up="Z") 
@@ -994,12 +1007,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     bpy.data.meshes.remove(m)  
 
                     #fix mesh
-                    fix_all_cmd = "volFixAll %s %s" % (out_file + '/' + name + "_tiles.rawc", out_file + '/'+ name + "_fix.rawc")  
+                    fix_all_cmd = fix_all_bin + " %s %s" % (out_file + '/' + name + "_tiles.rawc", out_file + '/'+ name + "_fix.rawc")  
                     subprocess.check_output([fix_all_cmd], shell=True)
 
                     #make obj
-                    raw2obj_cmd = "rawc2obj.py %s > %s" % (out_file + '/'+ name + '_fix.rawc', out_file + '/'+  name + ".obj")
-                    subprocess.check_output([raw2obj_cmd],shell=True)
+                    rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ name + '_fix.rawc', out_file + '/'+  name + ".obj")
+                    subprocess.check_output([rawc2obj_cmd],shell=True)
 
                     #import obj
                     bpy.ops.import_scene.obj(filepath=out_file + '/' + name  + ".obj", axis_forward='Y', axis_up="Z") 
@@ -1083,6 +1096,9 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         # for each sp associated with a group of cfa's
         
         # 5. for each cfa object:
+
+        bin_dir = os.path.join(os.path.dirname(__file__), 'bin') 
+        append_bin = os.path.join(bin_dir, 'insert_mdl_region.py')
 
         scn = bpy.context.scene
         objs = scn.objects
@@ -1231,7 +1247,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                             subprocess.check_output([tag_cmd],shell=True)
                         #concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
                        # subprocess.check_output([concat_cmd],shell=True)
-                            append_cmd = "insert_mdl_region.py %s %s > %s" % (sp_mdl_file_name, cwd + '/' + c_obj_name + "_regions.mdl", sp_mdl_with_tags_file_name)
+                            append_cmd = append_bin + " %s %s > %s" % (sp_mdl_file_name, cwd + '/' + c_obj_name + "_regions.mdl", sp_mdl_with_tags_file_name)
                             subprocess.check_output([append_cmd],shell=True)
                             bpy.ops.object.select_all(action='DESELECT')
                             sp_obj.select = True
@@ -1277,7 +1293,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                 #subprocess.check_output([concat_cmd],shell=True)
                                             #print("i", i)
                             print('tag obj:',cwd + '/' + sp_obj_name + "_tagged_"+ str(i) + ".mdl")
-                            append_cmd = "insert_mdl_region.py %s %s > %s" % (cwd + '/' + sp_obj_name + "_tagged_"+ str(i) + ".mdl", cwd + '/' + c_obj_name + "_regions.mdl", cwd + '/' + sp_obj_name + "_tagged_"+ str(i+1) + ".mdl")
+                            append_cmd = append_bin + " %s %s > %s" % (cwd + '/' + sp_obj_name + "_tagged_"+ str(i) + ".mdl", cwd + '/' + c_obj_name + "_regions.mdl", cwd + '/' + sp_obj_name + "_tagged_"+ str(i+1) + ".mdl")
                             subprocess.check_output([append_cmd],shell=True)
                             bpy.ops.object.select_all(action='DESELECT')
                             sp_obj.select = True
@@ -1384,7 +1400,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                 subprocess.check_output([tag_cmd],shell=True)
                         #concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
                        # subprocess.check_output([concat_cmd],shell=True)
-                                append_cmd = "insert_mdl_region.py %s %s > %s" % (cwd + '/' + sp_obj_name + ".mdl", cwd + '/' + c_obj_name + "_regions.mdl", sp_mdl_with_tags_file_name)
+                                append_cmd = append_bin + " %s %s > %s" % (cwd + '/' + sp_obj_name + ".mdl", cwd + '/' + c_obj_name + "_regions.mdl", sp_mdl_with_tags_file_name)
                                 subprocess.check_output([append_cmd],shell=True)
                                 bpy.ops.object.select_all(action='DESELECT')
                                 sp_obj.select = True
@@ -1430,7 +1446,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                 #subprocess.check_output([concat_cmd],shell=True)
                                             #print("i", i)
                                 print('tag obj:',cwd + '/' + sp_obj_name + "_tagged_"+ str(i) + ".mdl")
-                                append_cmd = "insert_mdl_region.py %s %s > %s" % (cwd + '/' + sp_obj_name + "_tagged_"+ str(i) + ".mdl", cwd + '/' + c_obj_name + "_regions.mdl", cwd + '/' + sp_obj_name + "_tagged_"+ str(i+1) + ".mdl")
+                                append_cmd = append_bin + " %s %s > %s" % (cwd + '/' + sp_obj_name + "_tagged_"+ str(i) + ".mdl", cwd + '/' + c_obj_name + "_regions.mdl", cwd + '/' + sp_obj_name + "_tagged_"+ str(i+1) + ".mdl")
                                 subprocess.check_output([append_cmd],shell=True)
                                 bpy.ops.object.select_all(action='DESELECT')
                                 sp_obj.select = True
