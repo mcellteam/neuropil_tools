@@ -1098,6 +1098,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         # 5. for each cfa object:
 
         bin_dir = os.path.join(os.path.dirname(__file__), 'bin') 
+        tag_bin = os.path.join(bin_dir, 'obj_tag_region')
         append_bin = os.path.join(bin_dir, 'insert_mdl_region.py')
 
         scn = bpy.context.scene
@@ -1243,7 +1244,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                             bpy.context.scene.objects.active = c_obj
                             c_obj.select = True
                             bpy.ops.export_scene.obj(filepath=cwd + '/' + c_obj_name + ".obj", axis_forward='Y', axis_up="Z", use_selection=True,                                                                                                                                              use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False) 
-                            tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
+                            tag_cmd = tag_bin + " %s %s > %s" % (sp_obj_file_name, cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
                             subprocess.check_output([tag_cmd],shell=True)
                         #concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
                        # subprocess.check_output([concat_cmd],shell=True)
@@ -1284,7 +1285,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                #bpy.ops.export_mdl_mesh.mdl('EXEC_DEFAULT', filepath=c_obj_name +".mdl")
                             bpy.ops.export_scene.obj(filepath=cwd + '/' + c_obj_name + ".obj", axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False) 
                     
-                            tag_cmd = "obj_tag_region %s %s > %s" % (cwd + '/' + sp_obj_name + ".obj", cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
+                            tag_cmd = tag_bin + " %s %s > %s" % (cwd + '/' + sp_obj_name + ".obj", cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
                             print("tag command:", tag_cmd) 
                             subprocess.check_output([tag_cmd],shell=True)
 
@@ -1396,7 +1397,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                 c_obj.select = True
                                 bpy.ops.export_scene.obj(filepath= cwd + '/' + c_obj_name + ".obj", axis_forward='Y', axis_up="Z", use_selection=True,                                                                                                                                              use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False) 
 
-                                tag_cmd = "obj_tag_region %s %s > %s" % (sp_obj_file_name, cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
+                                tag_cmd = tag_bin + " %s %s > %s" % (sp_obj_file_name, cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
                                 subprocess.check_output([tag_cmd],shell=True)
                         #concat_cmd = "( head -n -2 %s ; cat %s ; echo '}' ) > %s" % (sp_mdl_file_name, c_mdl_tag_file_name, sp_mdl_with_tags_file_name)
                        # subprocess.check_output([concat_cmd],shell=True)
@@ -1437,7 +1438,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                                #bpy.ops.export_mdl_mesh.mdl('EXEC_DEFAULT', filepath=c_obj_name +".mdl")
                                 bpy.ops.export_scene.obj(filepath=cwd + '/' + c_obj_name + ".obj", axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False) 
                     
-                                tag_cmd = "obj_tag_region %s %s > %s" % (cwd + '/' + sp_obj_name + ".obj", cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
+                                tag_cmd = tag_bin + " %s %s > %s" % (cwd + '/' + sp_obj_name + ".obj", cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
                                 print("tag command:", tag_cmd) 
                                 subprocess.check_output([tag_cmd],shell=True)
 
