@@ -45,8 +45,8 @@ from bpy_extras.io_utils import ImportHelper
 # python imports
 
 import re
-from  re import compile
 import numpy as np
+import glob
 import neuropil_tools
 import cellblender
 import gamer
@@ -678,25 +678,59 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
     def generate_contour_list(self, context, filepath):
         self.filepath = filepath
-        ser_prefix = self.filepath
+        ser_file = self.filepath
+        ser_prefix = os.path.splitext(self.filepath)[0]
 
-        first_re = compile('first3Dsection="(\d*)"')
-        last_re = compile('last3Dsection="(\d*)"')
-        default_thick_re = compile('defaultThickness="(.*)"')
+        first_re = re.compile('first3Dsection="(\d*)"')
+        last_re = re.compile('last3Dsection="(\d*)"')
+        default_thick_re = re.compile('defaultThickness="(.*)"')
 
-        ser_data = open(ser_prefix[:-4] + ".ser", "r").read()
-        self.min_section = first_re.search(ser_data).group(1)
-        self.min_section = str(int(self.min_section) +1)
-        self.max_section = last_re.search(ser_data).group(1)
-        self.max_section = str(int(self.max_section)- 1)
+        ser_data = open(ser_file, "r").read()
+#        self.min_section = first_re.search(ser_data).group(1)
+#        self.min_section = str(int(self.min_section) +1)
+#        self.max_section = last_re.search(ser_data).group(1)
+#        self.max_section = str(int(self.max_section)- 1)
         self.section_thickness = default_thick_re.search(ser_data).group(1)
 
-        contour_re = compile('Contour\ name=\"(.*?)\"')
+        trace_file_glob = sorted(glob.glob(ser_prefix + '.[0-9]*'))
+        trace_num_list = sorted([int(os.path.splitext(fn)[1][1:]) for fn in trace_file_glob])
+
+        # create list of contiguous runs of section file numbers
+        r_list = []
+        cur_r = [0,1]
+        r_next = trace_num_list[cur_r[0]]+1
+
+        for i in range(1,len(trace_num_list)):
+          if trace_num_list[i] == r_next:
+            r_next += 1
+            cur_r[1] += 1
+            if i == len(trace_num_list)-1:
+              r_list.append(cur_r)
+          else:
+            r_list.append(cur_r)
+            cur_r = [i,1]
+            r_next = trace_num_list[cur_r[0]]+1
+
+        r_list = np.array(r_list)
+        print('')
+        print(trace_num_list)
+        print('')
+        print(r_list)
+        print('')
+
+        # set min and max section numbers of longest contiguous run found
+        r_max = r_list[np.argmax(r_list[:, 1])]
+        self.min_section = str(trace_num_list[r_max[0]])
+        self.max_section = str(trace_num_list[r_max[0]+r_max[1]-1])
+
+        contour_re = re.compile('Contour\ name=\"(.*?)\"')
 
         all_names = []
         for i in range(int(self.min_section), int(self.max_section)):
-            print(i)
-            all_names += contour_re.findall(open(ser_prefix[:-3] + str(i)).read())
+            trace_file_name = '%s.%d' % (ser_prefix, i)
+            print('Reading contour names in trace file: %s' % (trace_file_name))
+#            all_names += contour_re.findall(open(ser_prefix[:-3] + str(i)).read())
+            all_names += contour_re.findall(open(trace_file_name).read())
          # Now you would put each item in this python list into a Blender collection property
         contour_names = sorted(list(set(all_names))) 
        
