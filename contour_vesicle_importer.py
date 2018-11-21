@@ -43,8 +43,8 @@ from bpy_extras.io_utils import ImportHelper
 # python imports
 
 import re
-from  re import compile
 import numpy as np
+import glob
 import neuropil_tools
 import cellblender
 
@@ -250,13 +250,14 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         return(new_contour)
 
 
+    '''
     def read_contour_list(self, context, filepath):
         self.filepath = filepath
         ser_prefix = self.filepath
 
-        first_re = compile('first3Dsection="(\d*)"')
-        last_re = compile('last3Dsection="(\d*)"')
-        default_thick_re = compile('defaultThickness="(.*)"')
+        first_re = re.compile('first3Dsection="(\d*)"')
+        last_re = re.compile('last3Dsection="(\d*)"')
+        default_thick_re = re.compile('defaultThickness="(.*)"')
 
         ser_data = open(ser_prefix[:-4] + ".ser", "r").read()
         self.min_section = first_re.search(ser_data).group(1)
@@ -268,7 +269,7 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         print("Last Section:  %s" % (self.max_section))
         print("Section Thickness:  %s" % (self.section_thickness))
 
-        contour_re = compile('Contour\ name=\"(.*?)\"')
+        contour_re = re.compile('Contour\ name=\"(.*?)\"')
 
         all_names = []
         for i in range(int(self.min_section), int(self.max_section)+1):
@@ -282,6 +283,69 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         for item in self.contour_list:
             print(item)
         return(self.contour_list)
+    '''
+
+
+    def read_contour_list(self, context, filepath):
+        self.filepath = filepath
+        ser_file = self.filepath
+        ser_prefix = os.path.splitext(self.filepath)[0]
+
+        first_re = re.compile('first3Dsection="(\d*)"')
+        last_re = re.compile('last3Dsection="(\d*)"')
+        default_thick_re = re.compile('defaultThickness="(.*)"')
+
+        ser_data = open(ser_file, "r").read()
+        self.section_thickness = default_thick_re.search(ser_data).group(1)
+
+        trace_file_glob = sorted(glob.glob(ser_prefix + '.[0-9]*'))
+        trace_num_list = sorted([int(os.path.splitext(fn)[1][1:]) for fn in trace_file_glob])
+
+        # create list of contiguous runs of section file numbers
+        r_list = []
+        cur_r = [0,1]
+        r_next = trace_num_list[cur_r[0]]+1
+
+        for i in range(1,len(trace_num_list)):
+          if trace_num_list[i] == r_next:
+            r_next += 1
+            cur_r[1] += 1
+            if i == len(trace_num_list)-1:
+              r_list.append(cur_r)
+          else:
+            r_list.append(cur_r)
+            cur_r = [i,1]
+            r_next = trace_num_list[cur_r[0]]+1
+
+        r_list = np.array(r_list)
+        print('')
+        print(trace_num_list)
+        print('')
+        print(r_list)
+        print('')
+
+        # set min and max section numbers of longest contiguous run found
+        r_max = r_list[np.argmax(r_list[:, 1])]
+        self.min_section = str(trace_num_list[r_max[0]])
+        self.max_section = str(trace_num_list[r_max[0]+r_max[1]-1])
+
+        contour_re = re.compile('Contour\ name=\"(.*?)\"')
+
+        all_names = []
+        for i in range(int(self.min_section), int(self.max_section)):
+            trace_file_name = '%s.%d' % (ser_prefix, i)
+            print('Reading contour names in trace file: %s' % (trace_file_name))
+#            all_names += contour_re.findall(open(ser_prefix[:-3] + str(i)).read())
+            all_names += contour_re.findall(open(trace_file_name).read())
+         # Now you would put each item in this python list into a Blender collection property
+        contour_names = sorted(list(set(all_names)))
+
+        for name in contour_names:
+            self.add_contour(context, name,"contour")
+        for item in self.contour_list:
+            print(item)
+
+
     
     
     def include_filtered_contour(self,context):
@@ -356,6 +420,8 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         #set variables
         ser_dir = os.path.split(self.filepath)[0]
         ser_file = os.path.split(self.filepath)[-1]
+        bin_dir = os.path.join(os.path.dirname(__file__), 'bin')
+        recon2obj_bin = os.path.join(bin_dir,'recon2obj')
 
         ser_prefix = os.path.splitext(ser_file)[0]
         ser_file_basename = ser_dir + '/' + ser_prefix
@@ -376,12 +442,12 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
                 if self.vesicle_import:
                   self.include_list[contour_name].vesicle_obj = True
                   obj_file = ser_dir + '/' + contour_name + '.obj'
-                  recon2obj_cmd = "recon2obj -vesicles -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
+                  recon2obj_cmd = recon2obj_bin + " -vesicles -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
                   print("Importing as Vesicles: %s" % (recon2obj_cmd))
                 else:
                   self.include_list[contour_name].vesicle_obj = False
                   obj_file = ser_dir + '/' + contour_name + '_contours.obj'
-                  recon2obj_cmd = "recon2obj -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
+                  recon2obj_cmd = recon2obj_bin + " -object %s -section_thickness %s %s %s %s > %s" % (contour_name, self.section_thickness, ser_file_basename, self.min_section, self.max_section, obj_file)
                   print("Importing as Contours: %s" % (recon2obj_cmd))
                 subprocess.check_output([recon2obj_cmd],shell=True)
             #import obj
