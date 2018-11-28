@@ -250,42 +250,6 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         return(new_contour)
 
 
-    '''
-    def read_contour_list(self, context, filepath):
-        self.filepath = filepath
-        ser_prefix = self.filepath
-
-        first_re = re.compile('first3Dsection="(\d*)"')
-        last_re = re.compile('last3Dsection="(\d*)"')
-        default_thick_re = re.compile('defaultThickness="(.*)"')
-
-        ser_data = open(ser_prefix[:-4] + ".ser", "r").read()
-        self.min_section = first_re.search(ser_data).group(1)
-        self.min_section = str(int(self.min_section))
-        self.max_section = last_re.search(ser_data).group(1)
-        self.max_section = str(int(self.max_section))
-        self.section_thickness = default_thick_re.search(ser_data).group(1)
-        print("First Section:  %s" % (self.min_section))
-        print("Last Section:  %s" % (self.max_section))
-        print("Section Thickness:  %s" % (self.section_thickness))
-
-        contour_re = re.compile('Contour\ name=\"(.*?)\"')
-
-        all_names = []
-        for i in range(int(self.min_section), int(self.max_section)+1):
-            print(i)
-            all_names += contour_re.findall(open(ser_prefix[:-3] + str(i)).read())
-         # Now put each item in this python list into a Blender collection property
-        contour_names = sorted(list(set(all_names))) 
-       
-        for name in contour_names:
-            self.add_contour(context, name,"contour")
-        for item in self.contour_list:
-            print(item)
-        return(self.contour_list)
-    '''
-
-
     def read_contour_list(self, context, filepath):
         self.filepath = filepath
         ser_file = self.filepath
@@ -298,8 +262,11 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         ser_data = open(ser_file, "r").read()
         self.section_thickness = default_thick_re.search(ser_data).group(1)
 
-        trace_file_glob = sorted(glob.glob(ser_prefix + '.[0-9]*'))
-        trace_num_list = sorted([int(os.path.splitext(fn)[1][1:]) for fn in trace_file_glob])
+        trace_file_glob = sorted(glob.glob(ser_prefix + os.path.extsep + '[0-9]*'))
+        pat = ser_prefix + '\\' + os.path.extsep + '[0-9]+'
+        patc = re.compile(pat)
+        trace_file_list = [patc.fullmatch(item).string for item in trace_file_glob if patc.fullmatch(item)]
+        trace_num_list = sorted([int(os.path.splitext(fn)[1][1:]) for fn in trace_file_list])
 
         # create list of contiguous runs of section file numbers
         r_list = []
@@ -333,7 +300,7 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
 
         all_names = []
         for i in range(int(self.min_section), int(self.max_section)):
-            trace_file_name = '%s.%d' % (ser_prefix, i)
+            trace_file_name = '%s%s%d' % (ser_prefix, os.path.extsep, i)
             print('Reading contour names in trace file: %s' % (trace_file_name))
 #            all_names += contour_re.findall(open(ser_prefix[:-3] + str(i)).read())
             all_names += contour_re.findall(open(trace_file_name).read())
@@ -345,8 +312,6 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         for item in self.contour_list:
             print(item)
 
-
-    
     
     def include_filtered_contour(self,context):
         for item in self.contour_list:
@@ -459,7 +424,16 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
     def draw_panel(self, context, panel):
         layout = panel.layout
         row = layout.row()
-        row.operator("contour_vesicle.impser", text="Import .ser file")  
+        row.label(text='Import Reconstruct Series:', icon='MOD_ARRAY')
+        row = layout.row(align=True)
+        row.prop(self, "filepath", text='')
+        row.operator('contour_vesicle.impser', icon='FILESEL', text='')
+
+        row = layout.row()
+        row.label(text = 'section thickness: ' + self.section_thickness)
+        row.label(text = 'min section #: ' + self.min_section)
+        row.label(text = 'max section #: ' + self.max_section)
+
         row = layout.row()
         row.label(text="Series Contour List:", icon='CURVE_DATA')
         row.label(text="Import Include List:", icon='COLLAPSEMENU')

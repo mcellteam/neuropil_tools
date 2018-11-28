@@ -627,7 +627,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         type = IncludeNameSceneProperty, name = "Include List")
     active_include_index = IntProperty(name="Active Include Index", default=0)
     new = BoolProperty(name = "Imported MDL Object", default = False)
-    filepath = StringProperty(name = "Remember Active Filepath", default= "")
+    filepath = StringProperty(name = "RECONSTRUCT Series Filepath", default= "")
     spine_namestruct_name = StringProperty("Set object name structure", default = "d##sp##")          
     PSD_namestruct_name = StringProperty("Set metadata name structure", default = "d##c##")
     central_namestruct_name = StringProperty("Set central object name structure", default = "d##")
@@ -692,8 +692,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 #        self.max_section = str(int(self.max_section)- 1)
         self.section_thickness = default_thick_re.search(ser_data).group(1)
 
-        trace_file_glob = sorted(glob.glob(ser_prefix + '.[0-9]*'))
-        trace_num_list = sorted([int(os.path.splitext(fn)[1][1:]) for fn in trace_file_glob])
+        trace_file_glob = sorted(glob.glob(ser_prefix + os.path.extsep + '[0-9]*'))
+        pat = ser_prefix + '\\' + os.path.extsep + '[0-9]+'
+        patc = re.compile(pat)
+        trace_file_list = [patc.fullmatch(item).string for item in trace_file_glob if patc.fullmatch(item)]
+        trace_num_list = sorted([int(os.path.splitext(fn)[1][1:]) for fn in trace_file_list])
 
         # create list of contiguous runs of section file numbers
         r_list = []
@@ -727,7 +730,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
         all_names = []
         for i in range(int(self.min_section), int(self.max_section)):
-            trace_file_name = '%s.%d' % (ser_prefix, i)
+            trace_file_name = '%s%s%d' % (ser_prefix, os.path.extsep, i)
             print('Reading contour names in trace file: %s' % (trace_file_name))
 #            all_names += contour_re.findall(open(ser_prefix[:-3] + str(i)).read())
             all_names += contour_re.findall(open(trace_file_name).read())
@@ -1573,8 +1576,16 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     def draw_panel(self, context, panel):
         layout = panel.layout
         row = layout.row()
-        row.operator("processor_tool.impser", text="Import .ser file")  
+        row.label(text='Import Reconstruct Series:', icon='MOD_ARRAY')
+        row = layout.row(align=True)
+        row.prop(self, "filepath", text='')
+        row.operator('processor_tool.impser', icon='FILESEL', text='')  
         #row.operator("processor_tool.spine_namestruct", text = "Set Spine Name")
+        row = layout.row()
+        row.label(text = 'section thickness: ' + self.section_thickness) 
+        row.label(text = 'min section #: ' + self.min_section) 
+        row.label(text = 'max section #: ' + self.max_section) 
+
         row = layout.row()
         row.label(text="Trace List:", icon='CURVE_DATA')
         row.label(text="Include List:", icon='MESH_ICOSPHERE')
