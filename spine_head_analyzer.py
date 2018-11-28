@@ -377,7 +377,7 @@ class NEUROPIL_UL_check_psd(bpy.types.UIList):
 
 
 class NEUROPIL_PT_SpineHeadAnalyzer(bpy.types.Panel):
-    bl_label = "Volumetric Analysis Tool"
+    bl_label = "Morphometric Analysis Tool"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_options = {'DEFAULT_CLOSED'}
