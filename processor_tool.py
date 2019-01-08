@@ -24,12 +24,10 @@ This file contains the classes for Diameter Tool.
 
 # stuff to call Volrover individual executables
 import sys
+import shutil
 import subprocess
 import os
-import difflib
 import re
-import itertools
-#import numpy
 
 # blender imports
 import bpy
@@ -61,14 +59,8 @@ def register():
 def unregister():
     bpy.utils.unregister_module(__name__)
 
-#Define operators
 
-#spine_trace_filter_name = ""
-
-#PSD_trace_filter_name= ""
-
-trace_filter_name = ""
-
+#Define Operators
 
 class NEUROPIL_OT_impser(bpy.types.Operator, ImportHelper):
     """Import from RECONSTRUCT Series file format (.ser)"""
@@ -90,64 +82,6 @@ class NEUROPIL_OT_impser(bpy.types.Operator, ImportHelper):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}       
-
-
-class NEUROPIL_OT_spine_namestruct(bpy.types.Operator):
-    bl_idname = "processor_tool.spine_namestruct"
-    bl_label = "Define Naming Pattern for Main Object"    
-    bl_description = "Define Naming Pattern for Main Object"    
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_options = {'UNDO'} 
-
-    spine_namestruct_name = StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
-  
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
-
-    def execute(self, context):
-        context.scene.test_tool.spine_namestruct(context, self.spine_namestruct_name)
-        return {'FINISHED'}   
-
-
-class NEUROPIL_OT_psd_namestruct(bpy.types.Operator):
-    bl_idname = "processor_tool.psd_namestruct"
-    bl_label = "Define Naming Pattern for Meta Object"    
-    bl_description = "Define Naming Pattern for Meta Object"    
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_options = {'UNDO'} 
-
-    PSD_namestruct_name = StringProperty(name = "Name: ", description = "Assign PSD Name", default = "")
-  
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
-   
-    def execute(self, context):
-        context.scene.test_tool.PSD_namestruct(context, self.PSD_namestruct_name)
-        return {'FINISHED'}   
-
-
-class NEUROPIL_OT_central_namestruct(bpy.types.Operator):
-    bl_idname = "processor_tool.central_namestruct"
-    bl_label = "Define Name for Central (shaft) Object"    
-    bl_description = "Define Name for Central (shaft) Object"    
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_options = {'UNDO'} 
-
-    central_namestruct_name = StringProperty(name = "Name: ", description = "Assign Central Object Name", default = "")
-  
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
-   
-    def execute(self, context):
-        context.scene.test_tool.central_namestruct(context, self.central_namestruct_name)
-
-        return {'FINISHED'}   
 
 
 class NEUROPIL_OT_include_contour(bpy.types.Operator):
@@ -233,8 +167,8 @@ class NEUROPIL_OT_tile_one_mesh(bpy.types.Operator):
 
 class NEUROPIL_OT_fix_mesh(bpy.types.Operator):
     bl_idname = "processor_tool.fix_mesh"
-    bl_label = "Fix Mesh Object"
-    bl_description = "Fix Mesh Object"    
+    bl_label = "Fix Selected Mesh Object"
+    bl_description = "Fix Selected Mesh Object"    
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -272,10 +206,32 @@ class NEUROPIL_OT_select_obje(bpy.types.Operator):
     #    return {'FINISHED'}
 
 
+class NEUROPIL_OT_add_contact_pattern(bpy.types.Operator):
+    bl_idname = "processor_tool.add_contact_pattern"
+    bl_label = "Define New Contact Pattern"
+    bl_description = "Define New Contact Pattern"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        context.scene.test_tool.add_contact_pattern(context)
+        return {'FINISHED'}
+
+
+class NEUROPIL_OT_remove_contact_pattern(bpy.types.Operator):
+    bl_idname = "processor_tool.remove_contact_pattern"
+    bl_label = "Remove Contact Pattern"
+    bl_description = "Remove Contact Pattern"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        context.scene.test_tool.remove_contact_pattern(context)
+        return {'FINISHED'}
+
+
 class NEUROPIL_OT_smooth(bpy.types.Operator):
     bl_idname = "processor_tool.smooth"
-    bl_label = "Smooth Object"
-    bl_description = "Smooth Object"
+    bl_label = "Smooth Selected Object"
+    bl_description = "Smooth Selected Object"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -286,8 +242,8 @@ class NEUROPIL_OT_smooth(bpy.types.Operator):
 
 class NEUROPIL_OT_smooth_all(bpy.types.Operator):
     bl_idname = "processor_tool.smooth_all"
-    bl_label = "Smooth All"
-    bl_description = "Smooth All"
+    bl_label = "Smooth All Objects"
+    bl_description = "Smooth All Objects"
     bl_options = {'REGISTER', 'UNDO'}
   
     def execute(self, context):
@@ -295,14 +251,14 @@ class NEUROPIL_OT_smooth_all(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class NEUROPIL_OT_tag_psds(bpy.types.Operator):
-    bl_idname = "processor_tool.tag_psds"
-    bl_label = "Assign PSD Region"
-    bl_description = "Assign PSD Region"
+class NEUROPIL_OT_tag_contacts(bpy.types.Operator):
+    bl_idname = "processor_tool.tag_contacts"
+    bl_label = "Tag Contact Region On All Objects"
+    bl_description = "Tag Contact Region On All Objects"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        context.scene.test_tool.tag_psds(context,"double")
+        context.scene.test_tool.tag_contacts(context,"double")
         return {'FINISHED'}
 
 
@@ -318,14 +274,14 @@ class NEUROPIL_OT_merge_objs(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class NEUROPIL_OT_tag_psd_single(bpy.types.Operator):
-    bl_idname = "processor_tool.tag_psd_single"
-    bl_label = "Define Meta Region ('tag')"
-    bl_description = "Define Region ('tag')"
+class NEUROPIL_OT_tag_contact_single(bpy.types.Operator):
+    bl_idname = "processor_tool.tag_contact_single"
+    bl_label = "Tag Contact Region On Selected Object"
+    bl_description = "Tag Contact Region On Selected Object"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        context.scene.test_tool.tag_psds(context,"single")
+        context.scene.test_tool.tag_contacts(context,"single")
         return {'FINISHED'}
 
 
@@ -378,11 +334,7 @@ class Trace_UL_draw_item(bpy.types.UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data,
                  active_propname, index):
-        global trace_filter_name
        
-        #self.filter_name = bpy.context.scene.test_tool.include_list.filter_name
-        #spine_trace_filter_name = self.spine_filter_name
-        trace_filter_name = self.filter_name
         self.use_filter_sort_alpha = True
         layout.label(item.name)
 
@@ -400,52 +352,77 @@ class Include_UL_draw_item(bpy.types.UIList):
         elif item.genus_issue == True:
             layout.label(item.name, icon = "MESH_TORUS")
         elif item.generated == True:
-#scn.objects[scn.test_tool.include_list[str(item)] != None:
             layout.label(item.name, icon='MESH_ICOSPHERE')
         else:
             layout.label(item.name)
 
 
-class SCN_UL_obj_draw_item(bpy.types.UIList):
+class Contact_Pattern_UL_draw_item(bpy.types.UIList):
+    
     def draw_item(self, context, layout, data, item, icon, active_data,
-                  active_propname, index):
-        scn = bpy.context.scene
-
-        '''
-        var_split_re = re.compile('#+|@+')
-
-        num_re = re.compile('#')
-        alpha_re = re.compile('@')
-        star_re = re.compile('\*')
-
-        base_pat_var = var_split_re.findall(scn.test_tool.spine_namestruct_name)
-        base_pat_const = var_split_re.split(scn.test_tool.spine_namestruct_name)
-
-        bpat = ''
-        i=0
-        for bvar in base_pat_var:
-            bpat = bpat + base_pat_const[i] + '(' + bvar + ')'
-            i += 1
-
-        if len(base_pat_const) > len(base_pat_var):
-            bpat = bpat + base_pat_const[i]
-
-        base_pat_expr = num_re.sub('[0-9]',bpat)
-        base_pat_expr = alpha_re.sub('[a-zA-Z]',base_pat_expr)
-        base_pat_expr = star_re.sub('.*?',base_pat_expr)
-        base_pat_re = re.compile(base_pat_expr)
-        '''
-
-        self.filter_name = scn.test_tool.filt
+                 active_propname, index):
+       
         self.use_filter_sort_alpha = True
+        layout.label(item.name)
+
+
+class SCN_UL_obj_draw_item(bpy.types.UIList):
+
+    use_base_name_filter = BoolProperty(name = "Filter Object List by Base Names", default = False)
+  
+    def draw_item(self, context, layout, data, item, icon, active_data,
+                  active_propname, index, flt_flag):
+
+        match_text = '    [ '
+        for contact_pattern in item.processor.contact_pattern_match_list:
+            match_text += contact_pattern.name + ' '
+        match_text += ']'
+
         if item.processor.multi_synaptic == True:
-            layout.label(item.name, icon = "MANIPUL")
+            layout.label(item.name + match_text, icon = "MANIPUL")
         elif item.processor.newton == True:
-            layout.label(item.name, icon='FILE_TICK')
+            layout.label(item.name + match_text, icon='FILE_TICK')
         elif item.processor.smoothed == True:
-            layout.label(item.name, icon='MOD_SMOOTH')
+            layout.label(item.name + match_text, icon='MOD_SMOOTH')
         else:
-            layout.label(item.name)
+            layout.label(item.name + match_text)
+
+    def draw_filter(self, context, layout):
+        box1 = layout.box()
+        row = box1.row()
+        row.prop(self, 'use_base_name_filter', text='Use Base Name Filter')
+
+
+    def filter_items(self, context, data, propname):
+      helper_funcs = bpy.types.UI_UL_list
+      
+      objs = getattr(data, propname)
+
+      scn_tt = bpy.context.scene.test_tool
+      if scn_tt.contact_pattern_list:
+        contact_pattern = scn_tt.contact_pattern_list[scn_tt.active_contact_pattern_index]
+      else:
+        contact_pattern = None
+      
+      flt_flags = []
+      flt_neworder = []
+
+      if self.use_base_name_filter and contact_pattern:
+        bn1_regex = contact_pattern.base_name_1_pattern.replace('#','[0-9]')
+        bn1_regex = bn1_regex.replace('*','.*')
+        bn2_regex = contact_pattern.base_name_2_pattern.replace('#','[0-9]')
+        bn2_regex = bn2_regex.replace('*','.*')
+  
+        bn1_recomp = re.compile(bn1_regex)
+        bn2_recomp = re.compile(bn2_regex)
+          
+        flt_flags = [ self.bitflag_filter_item*((bn1_recomp.fullmatch(obj.name)!=None) or (bn2_recomp.fullmatch(obj.name)!=None)) for obj in objs ]
+      else:
+        flt_flags = [self.bitflag_filter_item]*len(objs)
+
+      flt_neworder = helper_funcs.sort_items_by_name(objs, 'name')
+
+      return flt_flags, flt_neworder
 
 
 class SCN_TestTool(bpy.types.Panel):
@@ -460,18 +437,9 @@ class SCN_TestTool(bpy.types.Panel):
             context.scene.test_tool.draw_panel(context, panel=self)
 
 
-class SCN_TextEntry(bpy.types.Panel):
-    bl_label = "Test"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "scene"
-
-    def draw(self, context):
-        layout = self.layout
-        box1 = layout.box()
-        row = box1.row()
-        col = row.column(align = True)
-        col.operator("processor_tool.psd_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "")
+def pattern_change_callback(self,context):
+  self.pattern_change_callback(context)
+  return
 
 
 class ContourNameSceneProperty(bpy.types.PropertyGroup):
@@ -479,6 +447,48 @@ class ContourNameSceneProperty(bpy.types.PropertyGroup):
     
     def init_contour(self,context,name):
         self.name = name
+
+
+class ContactPatternObjectProperty(bpy.types.PropertyGroup):
+    name = StringProperty(name= "Contact Object Pattern", default ="")
+    base_name_1_pattern = StringProperty("Base Name 1 Pattern", default = "")
+    base_name_2_pattern = StringProperty("Base Name 2 Pattern", default = "")
+    contact_name_pattern = StringProperty("Contact Name Pattern", default = "")
+
+
+class ContactPatternSceneProperty(bpy.types.PropertyGroup):
+    name = StringProperty(name= "Contact Object Pattern", default ="")
+    base_name_1_pattern = StringProperty("Base Name 1 Pattern", default = "", update=pattern_change_callback)          
+    base_name_2_pattern = StringProperty("Base Name 2 Pattern", default = "", update=pattern_change_callback)          
+    contact_name_pattern = StringProperty("Contact Name Pattern", default = "", update=pattern_change_callback)          
+
+
+    def pattern_change_callback(self,context):
+
+        self.name = self.base_name_1_pattern + self.contact_name_pattern + self.base_name_2_pattern
+        # FIXME:  Check for uniqueness of name here:
+
+        # update (rebuild) match list for each object
+        for obj in bpy.context.scene.objects:
+           obj.processor.update_contact_pattern_match_list(context, obj)
+        return
+
+
+    def draw_props(self,layout):
+        row = layout.row()
+        row.label(text="Define Name Patterns for Tagging Contacts")  
+        row = layout.row()
+        row.label(text="(Use '#' to signify an integer,  '*' to signify a wildcard character)")  
+        row = layout.row()
+        row.prop(self, 'base_name_1_pattern', text='Base Name 1 Pattern')
+        row = layout.row()
+        row.prop(self, 'base_name_2_pattern', text='Base Name 2 Pattern')
+        row = layout.row()
+        row.prop(self, 'contact_name_pattern', text='Contact Name Pattern')
+        row = layout.row()
+        row.label(text='Contact Object Pattern:   ' + self.base_name_1_pattern + self.contact_name_pattern + self.base_name_2_pattern)
+
+
 
 
 class IncludeNameSceneProperty(bpy.types.PropertyGroup):
@@ -489,7 +499,6 @@ class IncludeNameSceneProperty(bpy.types.PropertyGroup):
     genus_issue = BoolProperty(name = "Genus > 0", default = False)         
     filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
     spine_filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
-    PSD_filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
     problem = BoolProperty(name = "Problem Tagging", default = False)
     
     def init_include(self,context,name):
@@ -497,15 +506,40 @@ class IncludeNameSceneProperty(bpy.types.PropertyGroup):
 
 
 class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
-    #obj_list = CollectionProperty(
-    #    type=ProcessorToolObProperty, name="psd_trace_list")
     active_obj_region_index = IntProperty(name="Active OBJ Index", default=0)
     n_components = IntProperty(name="Number of Components in Mesh", default=0)
     smoothed = BoolProperty(name="Smoothed Object", default=False)
     newton = BoolProperty(name = "New Object", default=False)
     multi_synaptic = BoolProperty(name = "Multiple Synapses", default = False)
     fix_all_fail = BoolProperty(name = "Failed to Fix Obj", default = False)
-    namestruct = StringProperty("Base and Meta Object Struct", default = "")          
+    namestruct = StringProperty("Base and Meta Object Struct", default = "")
+    contact_pattern_match_list = CollectionProperty(type = ContactPatternObjectProperty, name = "Contact Pattern Match List")
+
+
+    def update_contact_pattern_match_list(self, context, obj):
+      # Clear current match list
+      self.contact_pattern_match_list.clear()
+
+      # Rebuild match list
+      contact_pattern_list = bpy.context.scene.test_tool.contact_pattern_list
+      for contact_pattern in contact_pattern_list:
+        bn1_regex = contact_pattern.base_name_1_pattern.replace('#','[0-9]')
+        bn1_regex = bn1_regex.replace('*','.*')
+        bn2_regex = contact_pattern.base_name_2_pattern.replace('#','[0-9]')
+        bn2_regex = bn2_regex.replace('*','.*')
+
+        bn1_recomp = re.compile(bn1_regex)
+        bn2_recomp = re.compile(bn2_regex)
+
+        if bn1_recomp.fullmatch(obj.name) or bn2_recomp.fullmatch(obj.name):
+          new_match_pattern = self.contact_pattern_match_list.add()
+          new_match_pattern.name = contact_pattern.name
+          new_match_pattern.base_name_1_pattern = contact_pattern.base_name_1_pattern
+          new_match_pattern.base_name_2_pattern = contact_pattern.base_name_2_pattern
+          new_match_pattern.contact_name_pattern = contact_pattern.contact_name_pattern
+        
+      return
+          
 
     def select_obje(self, context, obje):
         if context.active_object is not None:
@@ -517,29 +551,6 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
         bpy.ops.mesh.reveal()
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.object.mode_set(mode = 'OBJECT')
-
-#        obs = context.scene.objects
-#        obje = context.active_object
-#        obje_name = obje.name  
-#        for obje in obs:
-#            obje = returnObjectByName(obje_name)
-##context.scene.objects[dend]
-#            if obje != None:
-#                print(obje)
-#                obje.select = True  
-#        #obje_list = bpy.data.objects.name[obje_name]
-#                bpy.ops.object.mode_set(mode='EDIT')
-#                bpy.ops.mesh.reveal()
-#                bpy.ops.mesh.select_all(action='DESELECT')
-#                bpy.ops.object.mode_set(mode = 'OBJECT')
-#        return(obje)
-
-
-    #def select_obje(self,context):
-        # For this spine head, select faces of this PSD:
-        
-        #reg = obj.mcell.regions.region_list[self.name]
-        #reg.select_region_faces(context)
 
     def set_n_components(self,context):
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -612,9 +623,130 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
 #        bpy.ops.mesh.select_all(action='DESELECT')
 #        bpy.ops.object.mode_set(mode='OBJECT')
         self.smoothed = True
+        obj = context.active_object
+        obj.processor.update_contact_pattern_match_list(context, obj)
 
         # ADD OBJ2MCELL
         return('FINISHED')
+
+
+    # Export object in Wavefront OBJ file format
+    def export_obj(self, context, obj, obj_file_name):
+
+        m = obj.data
+        obj_file =  open(obj_file_name, 'w')
+
+        # Export vertices
+        for v in m.vertices:
+          obj_file.write('v %f %f %f\n' % (v.co.x, v.co.y, v.co.z))
+
+#        obj_file.write('s off\n')
+        # Export polygons
+        for p in m.polygons:
+          obj_file.write('f')
+          for idx in p.vertices:
+            obj_file.write(' %d' % (idx+1))
+          obj_file.write('\n')
+        obj_file.close()
+
+
+    def tag_object(self, context, b_obj):
+        """ Assign Contact metadata from Boolean intersection of Contact Object and Base Object """
+
+        cwd = bpy.path.abspath(os.path.dirname(__file__))
+        print('tag_object cwd: %s' % (cwd))
+        bin_dir = os.path.join(os.path.dirname(__file__), 'bin') 
+        tag_bin = os.path.join(bin_dir, 'obj_tag_region')
+        append_bin = os.path.join(bin_dir, 'insert_mdl_region.py')
+
+        scn = bpy.context.scene
+        objs = scn.objects
+
+        b_obj_name = b_obj.name
+        print('Tagging Object: ' + b_obj_name)
+
+        contact_pattern_match_list = self.contact_pattern_match_list
+        c_objs = []
+        for contact_pattern in contact_pattern_match_list:
+          print('Contact Pattern: ' + contact_pattern.name)
+          print('BN1 pat:' + contact_pattern.base_name_1_pattern)
+          print('BN2 pat:' + contact_pattern.base_name_2_pattern)
+          bn1_pat = contact_pattern.base_name_1_pattern
+          bn2_pat = contact_pattern.base_name_2_pattern
+          c_pat = contact_pattern.contact_name_pattern
+
+          bn1_regex = bn1_pat.replace('#','[0-9]')
+          bn1_regex = bn1_regex.replace('*','.*')
+          bn1_recomp = re.compile(bn1_regex)
+
+          bn2_regex = bn2_pat.replace('#','[0-9]')
+          bn2_regex = bn2_regex.replace('*','.*')
+          bn2_recomp = re.compile(bn2_regex)
+
+          c_regex = c_pat.replace('#','[0-9]')
+          c_regex = c_regex.replace('*','.*')
+          c_recomp = re.compile(c_regex)
+
+          print('BN1 regex: ' + bn1_regex)
+          print('BN2 regex: ' + bn2_regex)
+
+          if bn1_recomp.fullmatch(b_obj_name):
+            c_obj_regex = b_obj_name + c_regex + bn2_regex
+            c_obj_recomp = re.compile(c_obj_regex)
+            c_objs.extend([ obj.name for obj in objs if c_obj_recomp.fullmatch(obj.name) ])
+
+          if bn2_recomp.fullmatch(b_obj_name):
+            c_obj_regex = bn1_regex + c_regex + b_obj_name
+            c_obj_recomp = re.compile(c_obj_regex)
+            c_objs.extend([ obj.name for obj in objs if c_obj_recomp.fullmatch(obj.name) ])
+          print('Matching Contact Objects: ', c_objs)
+ 
+        if len(c_objs) > 0:
+
+          # unselect all objects 
+          bpy.ops.object.select_all(action='DESELECT')
+          # now select and export the base object:
+          bpy.context.scene.objects.active = b_obj
+          b_obj.select = True
+
+          # Clear all existing regions from object
+          print("Clearing all regions from object")
+          bpy.ops.mcell.region_remove_all()
+
+          b_obj_file_name = cwd + '/' + b_obj_name + ".obj"
+          b_mdl_file_name = cwd + '/' + b_obj_name + ".mdl"
+          b_mdl_with_tags_file_name = cwd + '/' + b_obj_name + "_tagged.mdl"
+
+          # export b_obj as an OBJ file
+          b_obj.processor.export_obj(context, b_obj, b_obj_file_name)
+
+#          bpy.ops.export_scene.obj(filepath=b_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False) 
+          # export b_obj as an MDL file
+          bpy.ops.export_mdl_mesh.mdl('EXEC_DEFAULT', filepath=b_mdl_file_name)
+
+          for c_obj_name in c_objs:
+            bpy.ops.object.select_all(action='DESELECT')
+            c_obj = scn.objects[c_obj_name]
+            bpy.context.scene.objects.active = c_obj
+            c_obj.select = True
+            c_obj_file_name = cwd + '/' + c_obj.name + ".obj"
+            bpy.ops.export_scene.obj(filepath=c_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False) 
+
+            tag_cmd = tag_bin + " %s %s > %s" % (b_obj_file_name, cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
+            subprocess.check_output([tag_cmd],shell=True)
+            append_cmd = append_bin + " %s %s > %s" % (b_mdl_file_name, cwd + '/' + c_obj_name + "_regions.mdl", b_mdl_with_tags_file_name)
+            subprocess.check_output([append_cmd],shell=True)
+            shutil.copyfile(b_mdl_with_tags_file_name, b_mdl_file_name)
+
+          bpy.ops.object.select_all(action='DESELECT')
+          b_obj.select = True
+          b_mesh = b_obj.data
+          bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=b_mdl_with_tags_file_name)
+          bpy.data.meshes.remove(b_mesh)
+          b_obj = scn.objects[b_obj_name]
+          b_obj.processor.smoothed = True
+          b_obj.processor.newton = True
+          b_obj.processor.update_contact_pattern_match_list(context, b_obj)
 
 
 class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
@@ -622,26 +754,39 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     active_c_index = IntProperty(name="Active Contact Object Index", default=0)
     contour_list = CollectionProperty(
         type = ContourNameSceneProperty, name = "Contour List")
-    active_contour_index = IntProperty(name="Active Trace Index", default=0)
+    active_contour_index = IntProperty(name="Active Contour Index", default=0)
     include_list = CollectionProperty(
         type = IncludeNameSceneProperty, name = "Include List")
     active_include_index = IntProperty(name="Active Include Index", default=0)
+    contact_pattern_list = CollectionProperty(type = ContactPatternSceneProperty, name = "Contact Pattern List")
+    active_contact_pattern_index = IntProperty(name="Active Contact Pattern Index", default=0)
     new = BoolProperty(name = "Imported MDL Object", default = False)
     filepath = StringProperty(name = "RECONSTRUCT Series Filepath", default= "")
-    spine_namestruct_name = StringProperty("Set object name structure", default = "d##sp##")          
-    PSD_namestruct_name = StringProperty("Set metadata name structure", default = "d##c##")
-    central_namestruct_name = StringProperty("Set central object name structure", default = "d##")
-    spine_name = StringProperty(name = "Differentiates Spine", default = "")
-    psd_name = StringProperty(name = "Differentiates PSD",default = "")
     min_section = StringProperty(name="Minimum Reconstruct Section File", default= "")
     max_section = StringProperty(name="Maximum Reconstruct Section File", default= "")
     section_thickness = StringProperty(name="Maximum Reconstruct Section File", default= "0.05")
-    match_list = CollectionProperty(type = ContourNameSceneProperty, name = "Match List")
     filt = StringProperty(name = "Filter for Object list", default = "d[0-9][0-9]sp[0-9][0-9]")
-    #c_obj_name_list = CollectionProperty(name = "
 
-    #contour_name = StringProperty(name="Contour Name", default = "")
-    
+
+    '''
+    def pattern_change_callback(self,context):
+
+        print('Called whole-scene-level pattern_change_callback')
+        bn1_regex = self.base_name_1_pattern.replace('#','[0-9]')
+        bn1_regex = bn1_regex.replace('*','.*')
+        bn2_regex = self.base_name_2_pattern.replace('#','[0-9]')
+        bn2_regex = bn2_regex.replace('*','.*')
+
+        bn1_recomp = re.compile(bn1_regex)
+        bn2_recomp = re.compile(bn2_regex)
+        
+        for obj in bpy.context.scene.objects:
+          if bn1_recomp.fullmatch(obj.name) or bn2_recomp.fullmatch(obj.name):
+            obj.processor.name_match=True
+          else:
+            obj.processor.name_match=False
+        return
+    '''
 
     def spine_namestruct(self, context, spine_namestruct_name):
         self.spine_namestruct_name = spine_namestruct_name
@@ -666,7 +811,6 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     
     
     def add_contour(self,context,contour_name,mode):
-        """ Add a new PSD to psd_list """
         if mode == 'contour':
             new_contour=self.contour_list.add()
             new_contour.init_contour(context,contour_name)
@@ -680,6 +824,9 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         self.filepath = filepath
         ser_file = self.filepath
         ser_prefix = os.path.splitext(self.filepath)[0]
+
+        print('SER filepath: ', filepath)
+        print('SER prefix: ', ser_prefix)
 
         first_re = re.compile('first3Dsection="(\d*)"')
         last_re = re.compile('last3Dsection="(\d*)"')
@@ -715,11 +862,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             r_next = trace_num_list[cur_r[0]]+1
 
         r_list = np.array(r_list)
-        print('')
-        print(trace_num_list)
-        print('')
-        print(r_list)
-        print('')
+#        print('')
+#        print(trace_num_list)
+#        print('')
+#        print(r_list)
+#        print('')
 
         # set min and max section numbers of longest contiguous run found
         r_max = r_list[np.argmax(r_list[:, 1])]
@@ -739,8 +886,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
        
         for name in contour_names:
             self.add_contour(context, name,"contour")
-        for item in self.contour_list:
-            print(item)
+#        for item in self.contour_list:
+#            print(item)
         return(self.contour_list)
     
     
@@ -753,9 +900,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
 
     def include_filter_contour(self,context):
-        for item in self.contour_list:
-            if ((re.search(trace_filter_name, item.name)) or (re.search(trace_filter_name, item.name)))  and item.name not in self.include_list:
-                self.add_contour(context, item.name, "include")
+#  FIXME:  add a proper regex trace filter method:
+#        for item in self.contour_list:
+#            if ((re.search(trace_filter_name, item.name)) or (re.search(trace_filter_name, item.name)))  and item.name not in self.include_list:
+#                self.add_contour(context, item.name, "include")
+        pass
         return(self.include_list)
 
 
@@ -862,7 +1011,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 subprocess.check_output([rawc2obj_cmd],shell=True)
             #import obj
                 bpy.ops.import_scene.obj(filepath=out_file + '/' + contour_name  + ".obj", axis_forward='Y', axis_up="Z")
-                self.include_list[str(contour_name)].generated = True
+                obj = bpy.data.objects.get(contour_name)
+                if obj != None:
+                    self.include_list[str(contour_name)].generated = True
+                    obj.select = True
+                    context.scene.objects.active = obj
+                    obj.processor.update_contact_pattern_match_list(context, obj)
         #obj = bpy.context.scene.objects[contour_name]
          #   obj != None:
                 if i.multi_component == True:
@@ -905,6 +1059,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 self.include_list[str(contour_name)].generated = True
                 obj.select = True
                 context.scene.objects.active = obj
+                obj.processor.update_contact_pattern_match_list(context, obj)
         '''
         else:
             obj = bpy.data.objects.get(contour_name)
@@ -1115,18 +1270,30 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         obje.processor.select_obje(context, obje)
 
 
-    def tag_psds(self, context,mode):
-        """ Assign PSD metadata from intersection of cfa and sp traces """
+    def add_contact_pattern(self,context):
+      new_contact_pattern = self.contact_pattern_list.add()
+      self.active_contact_pattern_index = self.contact_pattern_list.find("")
+
+
+    def remove_contact_pattern(self,context):
+      if self.active_contact_pattern_index == 0:
+        self.contact_pattern_list.remove(self.active_contact_pattern_index)
+        self.active_contact_pattern_index = 0
+      elif self.active_contact_pattern_index == (len(self.contact_pattern_list)-1):
+        self.contact_pattern_list.remove(self.active_contact_pattern_index)
+        self.active_contact_pattern_index = len(self.contact_pattern_list)-1
+
+
+    def tag_contacts(self, context, mode):
+        """ Assign Contact metadata from Boolean intersection of Contact Object and Base Object """
+
         # 1 - select cfa and do obj2mcell
         # 2 - regular expression match for names, assign to variables
         # 3 - mesh tag region
         # 4 - add option for one spine versus whole branch
-        #obj = context.active_object
+
         cwd = bpy.path.abspath(os.path.dirname(__file__))
-        print('tag_psds cwd: %s' % (cwd))
-        #tmp_obj = cwd + "/tmp.obj"
-        #exe = bpy.path.abspath(cwd + "/obj2mesh")
-  
+        print('tag_contacts cwd: %s' % (cwd))
 
         # given a list of selected cfa's find all the unique sp's they match
 
@@ -1141,6 +1308,37 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         scn = bpy.context.scene
         objs = scn.objects
 
+        print('Tag Objects Mode: ' + mode)
+        
+        if mode == 'single':
+          b_obj = scn.objects[self.active_sp_index]
+
+          b_obj.processor.tag_object(context, b_obj)
+        else:
+          b_objs = []
+          for contact_pattern in self.contact_pattern_list:
+            bn1_pat = contact_pattern.base_name_1_pattern
+            bn2_pat = contact_pattern.base_name_2_pattern
+            c_pat = contact_pattern.contact_name_pattern
+
+            bn1_regex = bn1_pat.replace('#','[0-9]')
+            bn1_regex = bn1_regex.replace('*','.*')
+            bn1_recomp = re.compile(bn1_regex)
+
+            bn2_regex = bn2_pat.replace('#','[0-9]')
+            bn2_regex = bn2_regex.replace('*','.*')
+            bn2_recomp = re.compile(bn2_regex)
+ 
+            b_objs.extend([ obj.name for obj in objs if bn1_recomp.fullmatch(obj.name) or bn2_recomp.fullmatch(obj.name) ])
+        
+          b_objs = set(b_objs)
+          for b_obj_name in b_objs:
+            b_obj = scn.objects[b_obj_name]
+            b_obj.processor.tag_object(context, b_obj)
+
+        return
+
+######## previous version of tagging code:
         obj1 = self.spine_namestruct_name
         obj2 = self.PSD_namestruct_name
         print(obj1,obj2)
@@ -1348,7 +1546,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 #bpy.ops.object.select_all(action='DESELECT')
                 #c_obj_name = obje.replace('sp', 'c')
 
-        else:
+        else:  # tagging mode is 'single'
             contour = scn.objects[self.active_sp_index]
             print(contour)
             sp_obj_name  = contour.name
@@ -1504,40 +1702,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             else: 
                 obje = scn.objects[sp_obj_name]
                 self.include_list[obje.name].problem = True
-
-
        
-            #for obje in obje_list:
-            #    print('obje: ' + obje)
-            #    sp_obj = scn.objects[obje]
-            
-                #c_obj_list = []
-           #     sp_obj_name = sp_obj.name
-                            
-           #     for mtch in match_list:
-           #         if mtch[1] == sp_obj_name:
-           #             c_obj_name = mtch[0]
-                    
-                    #os.remove(sp_obj_file_name)
-                    #os.remove(c_obj_file_name)
-                    #os.remove(sp_mdl_file_name)
-                    #os.remove(c_mdl_tag_file_name_2)
-                    
-                    #os.remove(sp_obj_file_name)
-                    #os.remove(c_obj_file_name)
-                    #os.remove(sp_mdl_file_name)
-                    #os.remove(c_mdl_tag_file_name)
-
-            # import the concatenated tagged mdl and replace the blender object
-
-                #sp_obj_list.append(sp_obj)
-                #os.remove(sp_mdl_with_tags_file_name) 
-                #os.remove(sp_mdl_with_tags_file_name_2)
-
-            #os.remove(sp_mdl_with_tags_file_name) 
-            #if os.path.exists(sp_mdl_with_tags_file_name_2) and os.path.getsize(sp_mdl_with_tags_file_name_2) > 0:
-            #    os.path.remove(sp_mdl_with_tags_file_name_2)
-
 
     def smooth_all(self,context):
 #        spine_name = self.spine_namestruct_name.replace('#','*')
@@ -1590,78 +1755,65 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         row.label(text="Trace List:", icon='CURVE_DATA')
         row.label(text="Include List:", icon='MESH_ICOSPHERE')
         row = layout.row()
-        row.template_list("Trace_UL_draw_item","contours_in_ser_file",
-                          bpy.context.scene.test_tool, "contour_list",
+        col = row.column()
+        col.template_list("Trace_UL_draw_item","contours_in_ser_file",
+                          self, "contour_list",
                           self, "active_contour_index",
-                          rows=2)
-       # row.template_list("PSD_Trace_UL_draw_item","contours_in_ser_file",
-         #                 bpy.context.scene.test_tool, "contour_list",
-         #                 self, "active_contour_index",
-        #                  rows=2)
-       # row = layout.row() 
-        row.template_list("Include_UL_draw_item","included_in_ser_file",
-                          bpy.context.scene.test_tool, "include_list",
+                          rows=4)
+        col = row.column(align=True)
+        col.operator('processor_tool.include_contour', icon='FORWARD', text='') 
+        col.operator('processor_tool.include_filter_contour', icon='EXPORT', text='') 
+        col.operator('processor_tool.remove_contour_all', icon='X', text='') 
+
+        col = row.column()
+        col.template_list("Include_UL_draw_item","included_in_ser_file",
+                          self, "include_list",
                           self, "active_include_index",
-                          rows=2)
-        row = layout.row()
-        row.operator("processor_tool.include_contour", text="Include Contour") 
-        row.operator("processor_tool.remove_contour", text="Remove Contour")
+                          rows=4)
+        col = row.column(align=True)
+        col.operator('processor_tool.remove_contour', icon='ZOOMOUT', text='')
+        col.operator('processor_tool.generate_mesh_object_single', icon='MESH_ICOSPHERE', text='')
+        col.operator('processor_tool.generate_mesh_object', icon='POSE_DATA', text='')
+        col.operator('processor_tool.fix_mesh', icon='MODIFIER', text='')
+        col.operator('processor_tool.remove_components', icon='SEQ_SEQUENCER', text='')
 
-        row = layout.row()
-        row.operator("processor_tool.include_filter_contour", text = "Include Current Filtered Contours") 
-        row.operator("processor_tool.generate_mesh_object_single", text="Generate Single Mesh Object")
+        box1 = layout.box()
 
-        row = layout.row()
-        row.operator("processor_tool.remove_contour_all", text = "Clear Contour List") 
-        row.operator("processor_tool.generate_mesh_object", text="Generate Mesh Objects")
-
-        row = layout.row()
-        row.operator("processor_tool.fix_mesh", text = "Fix Mesh Objects")
-        row = layout.row()
-        row.label(text="Define Region Names for Tagging (use '#' to signify an integer)")  
-        row = layout.row()     
         box1 = layout.box()
         row = box1.row()
-        col = row.column(align = True)
-        col.operator("processor_tool.spine_namestruct", icon = "RESTRICT_SELECT_OFF", text = "Set Main Object Name")          
-        #row.label(text= 'processor_tool.spine_namestruct')  
-        row.label(text= "Current: " + bpy.context.scene.test_tool.spine_namestruct_name)
-        box1 = layout.box()
+        row.label(text="Contact Object Pattern List:", icon='HAND')
         row = box1.row()
-        col = row.column(align = True)
-        col.operator("processor_tool.psd_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Meta Object Name")
-        row.label(text= "Current: " +  bpy.context.scene.test_tool.PSD_namestruct_name) 
+        col = row.column()
+        row.template_list("Contact_Pattern_UL_draw_item","contact_patterns",
+                          self, "contact_pattern_list",
+                          self, "active_contact_pattern_index",
+                          rows=4) 
+        col = row.column(align=True)
+        col.operator('processor_tool.add_contact_pattern', icon='ZOOMIN', text='')
+        col.operator('processor_tool.remove_contact_pattern', icon='ZOOMOUT', text='')
+
+        if self.contact_pattern_list:
+          contact_pattern = self.contact_pattern_list[self.active_contact_pattern_index]
+          contact_pattern.draw_props(box1)
+
+
         row = layout.row()
         row.label(text="Object List:", icon='MESH_ICOSPHERE')
         row = layout.row()
+        col = row.column()
         row.template_list("SCN_UL_obj_draw_item","sp_objects_in_scene",
                           bpy.context.scene, "objects",
                           self, "active_sp_index",
-                          rows=2) 
-        #row = layout.row()
-        row.operator("processor_tool.remove_components", text="Allow Smooth")
-        row = layout.row()
-        row.operator("processor_tool.smooth", text="Smooth Selected Object (any!)")
-        #row = layout.row()
-        row.operator("processor_tool.tag_psd_single", text="Define Meta Region ('tag')")
-        row = layout.row()
-        row.operator("processor_tool.smooth_all", text="Smooth All Objects in List")
-        #row = layout.row()
-        row.operator("processor_tool.tag_psds", text="Define Meta Region for All Objects in List")
-        #row = layout.row()
-        #box1 = layout.box()
-        #row = box1.row()
-        #col = row.column(align = True)
-        #col.operator("processor_tool.central_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Central Object Name")
+                          rows=4) 
+        col = row.column(align=True)
+        col.operator('processor_tool.smooth', icon='MOD_SMOOTH', text='')
+        col.operator('processor_tool.smooth_all', icon='MOD_WAVE', text='')
+        col.label('', icon='BLANK1')
+        col.operator('processor_tool.tag_contact_single', icon='HAND', text='')
+        col.operator('processor_tool.tag_contacts', icon='POSE_HLT', text='')
+
         row = layout.row()
         row.label(text= "Merge central object with associated objects: ")
         row = layout.row()
         row.operator("processor_tool.merge_objs", text="Merge Objects")
-
-
-
-
-
-
-
 
