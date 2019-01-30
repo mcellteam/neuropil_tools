@@ -53,10 +53,6 @@ def unregister():
     bpy.utils.unregister_module(__name__)
 
 
-#inner_namestruct_name = ' '
-#inter_namestruct_name = ' '
-#outer_namestruct_name = ' '
-
 # Spine Head Analyzer Operators:
 
 class NEUROPIL_OT_spine_namestruct(bpy.types.Operator):
@@ -143,7 +139,7 @@ class NEUROPIL_OT_inner_namestruct(bpy.types.Operator):
     bl_options = {'UNDO'} 
     
     #global inner_namestruct_name
-    inner_namestruct_name = StringProperty(name = "Name: ", description = "Assign Inner Region Name", default = "")
+#    inner_namestruct_name = StringProperty(name = "Name: ", description = "Assign Inner Region Name", default = "")
   
     def invoke(self, context, event):
         wm = context.window_manager
@@ -156,12 +152,23 @@ class NEUROPIL_OT_inner_namestruct(bpy.types.Operator):
 
 class NEUROPIL_OT_select_psd(bpy.types.Operator):
     bl_idname = "spine_head_analyzer.select_psd"
-    bl_label = "Select Faces of PSD"
-    bl_description = "Select Faces of PSD"
+    bl_label = "Select Faces of Contact"
+    bl_description = "Select Faces of Contact"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         context.object.spine_head_ana.select_psd(context)
+        return {'FINISHED'}
+
+
+class NEUROPIL_OT_reset_psd(bpy.types.Operator):
+    bl_idname = "spine_head_analyzer.reset_psd"
+    bl_label = "Reset Contact Data to Initial State"
+    bl_description = "Reset Contact Data to Initial State"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        context.object.spine_head_ana.reset_psd(context)
         return {'FINISHED'}
 
 
@@ -333,47 +340,77 @@ class NEUROPIL_OT_output(bpy.types.Operator):
 # Spine Head Analyzer Panel:
 
 class NEUROPIL_UL_check_psd(bpy.types.UIList):
+
+    use_contact_filter = BoolProperty(name = "Filter Region List by Contact Names", default = True)
+
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
         scn = context.scene                  
         active_obj = context.active_object
-        c_name_struct = bpy.context.scene.test_tool.PSD_namestruct_name.replace('#','[0-9]')
-        sp_name_struct = bpy.context.scene.test_tool.spine_namestruct_name.replace('#','[0-9]')
         psd = active_obj.spine_head_ana.psd_list.get(item.name)  
-        #self.filter_name = c_name_struct
         if psd != None:
-            if psd.char_postsynaptic:
+            if psd.contact_type == 'PROTRUSION':
                 volume = active_obj.spine_head_ana.psd_list[item.name].volume
                 volume_spine = active_obj.spine_head_ana.psd_list[item.name].volume_spine
                 if (volume == 0.0) and (volume_spine == 0.0):
                     layout.label(item.name)
                 else:
                     layout.label(item.name, icon='FILE_TICK')
-            else:
+            elif psd.contact_type == 'VARICOSITY':
                 volume = active_obj.spine_head_ana.psd_list[item.name].volume
                 if (volume == 0.0):
                     layout.label(item.name)
                 else:
                     layout.label(item.name, icon='FILE_TICK')
+            elif psd.contact_type == 'PLAIN':
+                layout.label(item.name, icon='STYLUS_PRESSURE')
         else:
             layout.label(item.name)
 
-        #else:
-        #    volume = active_obj.spine_head_ana.psd_list[item.name].volume
-        #    if (volume == 0.0):
-        #        layout.label(item.name)
-        #    else:
-        #        layout.label(item.name, icon='LAYER_ACTIVE')
+
+    def draw_filter(self, context, layout):
+        box1 = layout.box()
+        row = box1.row()
+        row.prop(self, 'use_contact_filter', text='Use Contact Name Filter')
 
 
-#class DIAMETER_UL_psd_draw_item(bpy.types.UIList):
+    def filter_items(self, context, data, propname):
+      helper_funcs = bpy.types.UI_UL_list
+    
+      regs = getattr(data, propname)
 
-    #def draw_item(self, context, layout, data, item, icon, active_data,
-        #          active_propname, index):
-        #self.filter_name = "*spn*"
-        #active_obj = context.active_object
-        #spn = active_obj.spine_head_ana.spn_list.get(item.name)
-        #layout.label(item.name)
+      obj = context.active_object
+      if obj.processor.contact_pattern_match_list:
+        contact_pattern = obj.processor.contact_pattern_match_list[obj.spine_head_ana.active_contact_pattern_index]
+      else:
+        contact_pattern = None
+    
+      flt_flags = []
+      flt_neworder = []
+
+      if self.use_contact_filter and contact_pattern:
+        bn1_regex = contact_pattern.base_name_1_regex
+        bn2_regex = contact_pattern.base_name_2_regex
+        c_regex = contact_pattern.contact_name_regex
+        c_reg_regex = bn1_regex + c_regex + bn2_regex
+ 
+        c_reg_recomp = re.compile(c_reg_regex)
+    
+        flt_flags = [ self.bitflag_filter_item*((c_reg_recomp.fullmatch(reg.name)!=None)) for reg in regs ]
+
+      else:
+        flt_flags = [self.bitflag_filter_item]*len(regs)
+
+      flt_neworder = helper_funcs.sort_items_by_name(regs, 'name')
+
+      return flt_flags, flt_neworder
+
+
+class NEUROPIL_UL_contact_patterns(bpy.types.UIList):
+
+    def draw_item(self, context, layout, data, item, icon, active_data,
+                  active_propname, index):
+        layout.label(item.name)
 
 
 class NEUROPIL_PT_SpineHeadAnalyzer(bpy.types.Panel):
@@ -388,9 +425,13 @@ class NEUROPIL_PT_SpineHeadAnalyzer(bpy.types.Panel):
             context.object.spine_head_ana.draw_panel(context, panel=self)
 
 
-
-
 class SpineHeadAnalyzerSceneProperty(bpy.types.PropertyGroup):
+    varicosity_label = StringProperty("Varicosity Label", default = 'axb')
+    protrusion_label = StringProperty("Protrusion Label", default = 'sp')
+    head_label = StringProperty("Head Label", default = 'sph')
+    neck_label = StringProperty("Neck Label", default = 'spn')
+
+    '''
     inner_namestruct_name = StringProperty("Set Inner Region Name", default = "d##sph##")
     inter_namestruct_name = StringProperty("Set Intermediate Region Name", default = "d##spn##")
     outer_namestruct_name = StringProperty("Set Outer Region Name", default = "d##sp##")
@@ -409,6 +450,7 @@ class SpineHeadAnalyzerSceneProperty(bpy.types.PropertyGroup):
 
     def inner_namestruct(self, context, inner_namestruct_name):
         self.inner_namestruct_name = inner_namestruct_name
+    '''
      
 # Spine Head Analyzer Properties:
 # Properties of the PSDs:
@@ -443,6 +485,14 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
     neck_base_location = FloatVectorProperty(name="Location of Base of Spine Neck",default=(0.0,0.0,0.0))
     char_mito = BoolProperty(name="Mitochondrion in Bouton",default=False)
     exclude = BoolProperty(name="Exclude this spine?", default=False)
+    contact_type_enum = [
+        ('PLAIN', 'Plain (surface only)', ''),
+        ('PROTRUSION', 'Protrusion (head, neck)', ''),
+        ('VARICOSITY', 'Varicosity (in-line swelling)', '')]
+    contact_type = EnumProperty(
+        items=contact_type_enum, name="Contact Type",
+        description="Type of Contact")
+
     ensheathment_enum = [
                           ('Distant','Distant',''),
                           ('Partial','Partial',''),
@@ -457,6 +507,8 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 
     def init_psd(self,context,name):
         obj_name = context.active_object.name
+
+        '''
         dends = bpy.context.scene.test_tool.spine_namestruct_name.replace('#', '[0-9]')
         dend_filter = dends
         #dend_filter = 'd[0-9]{2}$'
@@ -465,6 +517,12 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             self.char_postsynaptic = True
         elif re.match(axon_filter,obj_name) != None:
             self.char_postsynaptic = False
+        '''
+
+        # FIXME: hard code contact to be a Protrusion
+        self.char_postsynaptic = True
+        self.contact_type = 'PLAIN'
+
         self.name = name
         self.head_name = ""
         self.spine_name = ""
@@ -507,8 +565,6 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
         bpy.ops.mesh.select_all(action='DESELECT')
         reg.select_region_faces(context)
         #else:
-   
-            
 
 
     def get_region_index(self,context):
@@ -1060,6 +1116,7 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
         # Now make a new region for spine head and name it
           # Generate the name for the spine head
         
+        '''
         #INNER VOLUME - get naming diff
         obj1 = bpy.context.scene.test_tool.PSD_namestruct_name
         
@@ -1140,19 +1197,31 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
         #OUTER VOLUME - get naming diff
         outer_obj_name = inner_obj_name + '_out'         
 
-        #bpy.context.scn.volume_analyzer.outer_obj_name = outer_obj_name
-        
         print('Test names:', name, inner_obj_name, inter_obj_name, outer_obj_name)
         print(outer_obj_name)
+        '''
+
+        scn = bpy.context.scene
         orig_obj = context.active_object
+        mesh = orig_obj.data
+        reg_list = orig_obj.mcell.regions.region_list  
+        contact_pattern = orig_obj.processor.contact_pattern_match_list[orig_obj.spine_head_ana.active_contact_pattern_index]
+
 #        print("Computing volumed of %s on %s..." % (self.name, orig_obj.name))
+        bn1_grp_regex = '(' + contact_pattern.base_name_1_regex + ')'
+        bn2_grp_regex = '(' + contact_pattern.base_name_2_regex + ')'
+        c_grp_regex = '(' + contact_pattern.contact_name_regex + ')'
+        c_regex = bn1_grp_regex + c_grp_regex + bn2_grp_regex
+        c_m = re.fullmatch(c_regex,self.name)
+        c_pat = contact_pattern.contact_name_pattern
+        c_label = re.sub('[\#\*]', '', c_pat)
         if mode == 'head':
-            #if self.char_postsynaptic:
-            reg_name = self.name.replace(name, inner_obj_name)
+            if self.contact_type=='PROTRUSION':
+                head_part = re.sub(c_label, scn.volume_analyzer.head_label, c_m.groups()[1])
+            elif self.contact_type=='VARICOSITY':
+                head_part = re.sub(c_label, scn.volume_analyzer.varicosity_label, c_m.groups()[1])
+            reg_name = c_m.groups()[0] + head_part + c_m.groups()[2]
             self.head_name = reg_name
-            #else:
-            #    reg_name = self.name.replace(name, name + '_axb')
-            #    self.head_name = reg_name
         else: 
             reg_name = self.name.replace(name, outer_obj_name)
             self.spine_name = reg_name
@@ -1164,7 +1233,7 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             reg = orig_obj.mcell.regions.region_list[reg_name]
         else:
 #            print("  Resetting region %s" % (reg_name))
-            reg.reset_region(context)
+            reg.reset_region(mesh)
 #        print("  Assigning faces to region %s" % (reg_name))
         reg.assign_region_faces(context)
     
@@ -1535,6 +1604,7 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             scn.objects.active = orig_obj
             #unhide and unselect original mesh
             context.scene.update()
+            mesh = orig_obj.data
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.reveal()
             bpy.ops.mesh.select_mode(type='FACE')
@@ -1550,7 +1620,7 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
                 orig_obj.mcell.regions.add_region_by_name(context,spn_name)
                 neck_reg = orig_obj.mcell.regions.region_list[spn_name]
             else:
-                neck_reg.reset_region(context)
+                neck_reg.reset_region(mesh)
             spine_reg = orig_obj.mcell.regions.region_list[sp_name]
             head_reg = orig_obj.mcell.regions.region_list[sph_name]
 
@@ -1585,6 +1655,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
         type=SpineHeadAnalyzerPSDProperty, name="contact list")
     active_spn_region_index = IntProperty(name="Active SPN Index", default=0)
     active_psd_region_index = IntProperty(name="Active PSD Index", default=0)
+    active_contact_pattern_index = IntProperty(name="Active Contact Pattern Index", default=0)
     n_components = IntProperty(name="Number of Components in Mesh", default=0)
     make_shell_head_opt = BoolProperty(name="Make Spine Head Shell?", default=True)
     make_shell_spine_opt = BoolProperty(name="Make Spine Shell?", default=True)
@@ -1595,26 +1666,47 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
 
 
     def get_active_psd(self,context):
-        active_obj = context.active_object
-        reg_list = active_obj.mcell.regions.region_list  
-        #if reg_list = None:
-        #    mock_name = bpy.context.scene.test_tool.PSD_namestruct_name.replace('X','0')
-        #    reg2 = active_obj.mcell.regions.add_region_by_name(context,mock_name)    
-        c_name = bpy.context.scene.test_tool.PSD_namestruct_name.replace('#','[0-9]')
-        sy_list = [reg.name for reg in reg_list if re.match(c_name, reg.name)]
+        obj = context.active_object
+        reg_list = obj.mcell.regions.region_list  
+
+        '''
+        contact_pattern = obj.processor.contact_pattern_match_list[0]
+        bn1_regex = contact_pattern.base_name_1_regex
+        bn2_regex = contact_pattern.base_name_2_regex
+        c_regex = contact_pattern.contact_name_regex
+        c_reg_regex = bn1_regex + c_regex + bn2_regex
+
+        c_reg_recomp = re.compile(c_reg_regex)
+
+        c_list = [reg.name for reg in reg_list if c_reg_recomp.fullmatch(reg.name)]
         psd = None
         psd_region_name = None
-        if len(sy_list) > 0:
+
+        if len(c_list) > 0:
             psd_region_name = reg_list[self.active_psd_region_index].name
             psd = self.psd_list.get(psd_region_name)
+        '''
+
+        psd = None
+        psd_region_name = None
+        psd_region_name = reg_list[self.active_psd_region_index].name
+        psd = self.psd_list.get(psd_region_name)
+
         return(psd, psd_region_name)
 
 
-    def add_psd(self,context,name):
+    def add_psd(self,context,psd_name):
         """ Add a new PSD to psd_list """
         new_psd=self.psd_list.add()
-        new_psd.init_psd(context,name)
+        new_psd.init_psd(context,psd_name)
         return(new_psd)
+
+
+    def reset_psd(self,context):
+        """ Reset PSD to initial state """
+        psd, psd_region_name = self.get_active_psd(context)
+        if psd!=None:
+          psd.init_psd(context,psd.name)
 
 
     def select_psd(self,context):
@@ -1887,6 +1979,9 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
 
     def draw_panel(self, context, panel):
         layout = panel.layout
+        scn = bpy.context.scene
+
+        '''
         row = layout.row() 
         row.label(text="Define Region Names for Tagging (use '#' to signify an integer)")  
         row = layout.row()     
@@ -1910,28 +2005,52 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
         #col = row.column(align = True) 
         #col.operator("spine_head_analyzer.outer_namestruct"   , icon = "RESTRICT_SELECT_OFF", text = "Set Outer Object Name")
         #row.label(text= "Current: " +  bpy.context.scene.volume_analyzer.outer_namestruct_name) 
+        '''
+
         row = layout.row()
         active_obj = context.active_object
+        row.label(text='Object: ' + active_obj.name, icon='MESH_ICOSPHERE')
+
+        row = layout.row()
 
         if (active_obj != None) and (active_obj.type == 'MESH'):
             row = layout.row()
-            row.label(text="Select all faces of spine head associated with a PSD", icon='FORWARD')
+            row.label(text="Select faces of features associated with a contact region", icon='FORWARD')
             row = layout.row()
-            row.label(text="Spine PSDs:", icon='MESH_ICOSPHERE')               
+
+#            row.operator("spine_head_analyzer.recompute_volumes", text="Recompute All Volumes")
+
             row = layout.row()
-            row.operator("spine_head_analyzer.recompute_volumes", text="Recompute All Volumes")
-# Layout active_object.mcell.regions.region_list with filter "*sy*" and active_psd_region_index
-#FIXME: add "*sy*" filter:
+            row.label(text="Contact Patterns:",icon='HAND')
             row = layout.row() 
-            row.template_list("NEUROPIL_UL_check_psd","spine_psd_list",
+            row.template_list("NEUROPIL_UL_contact_patterns","contact_pattern_list",
+                          active_obj.processor, "contact_pattern_match_list",
+                          self, "active_contact_pattern_index",
+                          rows=2)            
+
+            row = layout.row()
+            row = layout.row()
+            row = layout.row()
+            row.label(text="Contact Regions:", icon='STYLUS_PRESSURE')
+            row = layout.row() 
+            col = row.column()
+            col.template_list("NEUROPIL_UL_check_psd","spine_psd_list",
                           active_obj.mcell.regions, "region_list",
                           self, "active_psd_region_index",
                           rows=2)            
+            col = row.column(align = True)
+            col.operator('spine_head_analyzer.reset_psd', icon='LOOP_BACK', text='')
+
             psd, psd_region_name = self.get_active_psd(context)  
             #row = layout.row()
             #row.prop(self,"make_shell_head_opt",text="Make Meta Region Shell")
             #row = layout.row()
             #row.prop(self,"make_shell_spine_opt",text="Make Object Shell")
+            if psd_region_name != None:
+                row = layout.row()
+                row.operator("spine_head_analyzer.select_psd", text="Select Contact Region")
+
+            '''
             if psd_region_name != None:
                 row = layout.row()
                 row.operator("spine_head_analyzer.select_psd", text="Select Region")
@@ -1942,26 +2061,45 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                 row.operator("spine_head_analyzer.generate_mock_psd", text = "Initialize Region")
             row = layout.row()
             row.operator("spine_head_analyzer.remove_mock_psd", text = "Remove Initialized Region")
+            '''
 
             if psd != None:
-                if psd.char_postsynaptic:
-                    #row = layout.row()
-                    #row.prop(psd,"exclude",text="Exclude this spine")
+                row = layout.row()
+                row.prop(psd,"contact_type",text="Contact Type")
+                if psd.contact_type == 'PROTRUSION':
+                  row = layout.row()
+                  row.prop(scn.volume_analyzer,"protrusion_label")
+                  row = layout.row()
+                  row.prop(scn.volume_analyzer,"head_label")
+                  row = layout.row()
+                  row.prop(scn.volume_analyzer,"neck_label")
+                elif psd.contact_type == 'VARICOSITY':
+                  row = layout.row()
+                  row.prop(scn.volume_analyzer,"varicosity_label")
+
+                row = layout.row()
+                row = layout.row()
+                row = layout.row()
+                row.label(text="Contact Area: %.4g um^2 " % (psd.area_psd_az) )
+
+                if psd.contact_type == 'PROTRUSION':
+#                    row = layout.row()
+#                    row.prop(psd,"exclude",text="Exclude this contact")
                     mesh = active_obj.data
                     row = layout.row()
                     row.enabled = (mesh.total_face_sel > 0)
                     row = layout.row()
-                    row.operator("spine_head_analyzer.compute_volume", text="Compute Inner Volume")
+                    row.operator("spine_head_analyzer.compute_volume", text="Compute Head Volume")
                     row.enabled = (mesh.total_face_sel > 0)
-                    row.operator("spine_head_analyzer.compute_volume_spine", text="Compute Outer Volume")
+                    row.operator("spine_head_analyzer.compute_volume_spine", text="Compute Whole Protrusion Volume")
                     row = layout.row()
                     if (psd.volume != 0.0):
                         row = layout.row()
-                        row.label(text="Inner Volume: %.4g um^3" % (psd.volume)) 
+                        row.label(text="Head Volume: %.4g um^3" % (psd.volume)) 
                         row = layout.row()
-                        row.label(text ="Inner Volume Surface Area: %.4g um^3" % (psd.area_head))
-                        row = layout.row()
-                        row.label(text ="Region Surface Area: %.4g um^3" % (psd.area_psd_az))
+                        row.label(text ="Head Surface Area: %.4g um^3" % (psd.area_head))
+#                        row = layout.row()
+#                        row.label(text ="Region Surface Area: %.4g um^3" % (psd.area_psd_az))
                         row = layout.row()
                         row.operator("spine_head_analyzer.calculate_diameter_head", text="Calculate Head Diameter")
                         if (psd.diameter_head_max != 0.0):
@@ -1971,7 +2109,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                             row.label(text="      Min Head Diameter: %.5f um" % (psd.diameter_head_min))
                     if (psd.volume_neck != 0.0):                    
                         row = layout.row()
-                        row.label(text="Intermediate Volume: %.4g um^3" % (psd.volume_neck))
+                        row.label(text="Neck Volume: %.4g um^3" % (psd.volume_neck))
                         row = layout.row()
                         row.operator("spine_head_analyzer.calculate_diameter", text="Calculate Neck Diameter")
                         if (psd.diameter_neck_max != 0.0):
@@ -1981,9 +2119,20 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                             row.label(text="      Min Neck Diameter: %.5f um" % (psd.diameter_neck_min))
                     if (psd.volume_spine != 0.0):                    
                         row = layout.row()
-                        row.label(text="Outer Volume: %.4g um^3" % (psd.volume_spine))
-                    #row.label(text="Spine Neck List:", icon='MESH_ICOSPHERE')          
-                    #if psd.neck_name != "": 
+                        row.label(text="Whole Protrusion Volume: %.4g um^3" % (psd.volume_spine))
+                elif psd.contact_type == 'VARICOSITY':
+#                    row = layout.row()
+#                    row.prop(psd,"exclude",text="Exclude this contact")
+                    mesh = active_obj.data
+                    row = layout.row()
+                    row.enabled = (mesh.total_face_sel > 0)
+                    row.operator("spine_head_analyzer.compute_volume", text="Compute Varicosity Volume")
+                    row = layout.row()
+                    if (psd.volume != 0.0):
+                        row = layout.row()
+                        row.label(text="Varicosity Volume: %.4g um^3" % (psd.volume)) 
+                        row = layout.row()
+                        row.label(text ="Varicosity Surface Area: %.4g um^3" % (psd.area_head))
             row = layout.row()
             row.operator("spine_head_analyzer.output", text="Output")
 

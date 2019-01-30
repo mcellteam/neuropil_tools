@@ -408,10 +408,8 @@ class SCN_UL_obj_draw_item(bpy.types.UIList):
       flt_neworder = []
 
       if self.use_base_name_filter and contact_pattern:
-        bn1_regex = contact_pattern.base_name_1_pattern.replace('#','[0-9]')
-        bn1_regex = bn1_regex.replace('*','.*')
-        bn2_regex = contact_pattern.base_name_2_pattern.replace('#','[0-9]')
-        bn2_regex = bn2_regex.replace('*','.*')
+        bn1_regex = contact_pattern.base_name_1_regex
+        bn2_regex = contact_pattern.base_name_2_regex
   
         bn1_recomp = re.compile(bn1_regex)
         bn2_recomp = re.compile(bn2_regex)
@@ -454,6 +452,9 @@ class ContactPatternObjectProperty(bpy.types.PropertyGroup):
     base_name_1_pattern = StringProperty("Base Name 1 Pattern", default = "")
     base_name_2_pattern = StringProperty("Base Name 2 Pattern", default = "")
     contact_name_pattern = StringProperty("Contact Name Pattern", default = "")
+    base_name_1_regex = StringProperty("Base Name 1 Regex", default = "")
+    base_name_2_regex = StringProperty("Base Name 2 Regex", default = "")
+    contact_name_regex = StringProperty("Contact Name Regex", default = "")
 
 
 class ContactPatternSceneProperty(bpy.types.PropertyGroup):
@@ -461,12 +462,27 @@ class ContactPatternSceneProperty(bpy.types.PropertyGroup):
     base_name_1_pattern = StringProperty("Base Name 1 Pattern", default = "", update=pattern_change_callback)          
     base_name_2_pattern = StringProperty("Base Name 2 Pattern", default = "", update=pattern_change_callback)          
     contact_name_pattern = StringProperty("Contact Name Pattern", default = "", update=pattern_change_callback)          
+    base_name_1_regex = StringProperty("Base Name 1 Regex", default = "")
+    base_name_2_regex = StringProperty("Base Name 2 Regex", default = "")
+    contact_name_regex = StringProperty("Contact Name Regex", default = "")
 
 
     def pattern_change_callback(self,context):
 
         self.name = self.base_name_1_pattern + self.contact_name_pattern + self.base_name_2_pattern
         # FIXME:  Check for uniqueness of name here:
+
+        # convert patterns to formal regex
+        bn1_regex = self.base_name_1_pattern.replace('#','[0-9]')
+        bn1_regex = bn1_regex.replace('*','.*')
+        bn2_regex = self.base_name_2_pattern.replace('#','[0-9]')
+        bn2_regex = bn2_regex.replace('*','.*')
+        c_regex = self.contact_name_pattern.replace('#','[0-9]')
+        c_regex = c_regex.replace('*','.*')
+
+        self.base_name_1_regex = bn1_regex
+        self.base_name_2_regex = bn2_regex
+        self.contact_name_regex = c_regex
 
         # update (rebuild) match list for each object
         for obj in bpy.context.scene.objects:
@@ -523,10 +539,8 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
       # Rebuild match list
       contact_pattern_list = bpy.context.scene.test_tool.contact_pattern_list
       for contact_pattern in contact_pattern_list:
-        bn1_regex = contact_pattern.base_name_1_pattern.replace('#','[0-9]')
-        bn1_regex = bn1_regex.replace('*','.*')
-        bn2_regex = contact_pattern.base_name_2_pattern.replace('#','[0-9]')
-        bn2_regex = bn2_regex.replace('*','.*')
+        bn1_regex = contact_pattern.base_name_1_regex
+        bn2_regex = contact_pattern.base_name_2_regex
 
         bn1_recomp = re.compile(bn1_regex)
         bn2_recomp = re.compile(bn2_regex)
@@ -537,6 +551,9 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
           new_match_pattern.base_name_1_pattern = contact_pattern.base_name_1_pattern
           new_match_pattern.base_name_2_pattern = contact_pattern.base_name_2_pattern
           new_match_pattern.contact_name_pattern = contact_pattern.contact_name_pattern
+          new_match_pattern.base_name_1_regex = contact_pattern.base_name_1_regex
+          new_match_pattern.base_name_2_regex = contact_pattern.base_name_2_regex
+          new_match_pattern.contact_name_regex = contact_pattern.contact_name_regex
         
       return
           
@@ -671,20 +688,13 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
           print('Contact Pattern: ' + contact_pattern.name)
           print('BN1 pat:' + contact_pattern.base_name_1_pattern)
           print('BN2 pat:' + contact_pattern.base_name_2_pattern)
-          bn1_pat = contact_pattern.base_name_1_pattern
-          bn2_pat = contact_pattern.base_name_2_pattern
-          c_pat = contact_pattern.contact_name_pattern
 
-          bn1_regex = bn1_pat.replace('#','[0-9]')
-          bn1_regex = bn1_regex.replace('*','.*')
+          bn1_regex = contact_pattern.base_name_1_regex
+          bn2_regex = contact_pattern.base_name_2_regex
+          c_regex = contact_pattern.contact_name_regex
+
           bn1_recomp = re.compile(bn1_regex)
-
-          bn2_regex = bn2_pat.replace('#','[0-9]')
-          bn2_regex = bn2_regex.replace('*','.*')
           bn2_recomp = re.compile(bn2_regex)
-
-          c_regex = c_pat.replace('#','[0-9]')
-          c_regex = c_regex.replace('*','.*')
           c_recomp = re.compile(c_regex)
 
           print('BN1 regex: ' + bn1_regex)
@@ -1283,6 +1293,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         self.contact_pattern_list.remove(self.active_contact_pattern_index)
         self.active_contact_pattern_index = len(self.contact_pattern_list)-1
 
+      # update (rebuild) match list for each object
+      for obj in bpy.context.scene.objects:
+         obj.processor.update_contact_pattern_match_list(context, obj)
+      return
+
 
     def tag_contacts(self, context, mode):
         """ Assign Contact metadata from Boolean intersection of Contact Object and Base Object """
@@ -1317,16 +1332,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         else:
           b_objs = []
           for contact_pattern in self.contact_pattern_list:
-            bn1_pat = contact_pattern.base_name_1_pattern
-            bn2_pat = contact_pattern.base_name_2_pattern
-            c_pat = contact_pattern.contact_name_pattern
+            bn1_regex = contact_pattern.base_name_1_regex
+            bn2_regex = contact_pattern.base_name_2_regex
 
-            bn1_regex = bn1_pat.replace('#','[0-9]')
-            bn1_regex = bn1_regex.replace('*','.*')
             bn1_recomp = re.compile(bn1_regex)
-
-            bn2_regex = bn2_pat.replace('#','[0-9]')
-            bn2_regex = bn2_regex.replace('*','.*')
             bn2_recomp = re.compile(bn2_regex)
  
             b_objs.extend([ obj.name for obj in objs if bn1_recomp.fullmatch(obj.name) or bn2_recomp.fullmatch(obj.name) ])
@@ -1809,7 +1818,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         col.operator('processor_tool.smooth', icon='MOD_SMOOTH', text='')
         col.operator('processor_tool.smooth_all', icon='MOD_WAVE', text='')
         col.label('', icon='BLANK1')
-        col.operator('processor_tool.tag_contact_single', icon='HAND', text='')
+        col.operator('processor_tool.tag_contact_single', icon='STYLUS_PRESSURE', text='')
         col.operator('processor_tool.tag_contacts', icon='POSE_HLT', text='')
 
         row = layout.row()
