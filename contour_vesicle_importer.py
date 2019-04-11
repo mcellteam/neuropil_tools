@@ -186,7 +186,7 @@ class Include_Ves_UL_draw_item(bpy.types.UIList):
             if item.vesicle_obj:
               layout.label(item.name, icon='GROUP_VERTEX')
             else:
-              layout.label(item.name, icon='COLLAPSEMENU')
+              layout.label(item.name, icon='SORTSIZE')
         else:
             layout.label(item.name)
 
@@ -436,28 +436,29 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
 
         row = layout.row()
         row.label(text="Series Contour List:", icon='CURVE_DATA')
-        row.label(text="Import Include List:", icon='COLLAPSEMENU')
+        row.label(text="Import Include List:", icon='SORTSIZE')
         row = layout.row()
-        row.template_list("Contour_Ves_UL_draw_item","contours_in_ser_file",
+        col = row.column()
+        col.template_list("Contour_Ves_UL_draw_item","contours_in_ser_file",
                           bpy.context.scene.contour_vesicle, "contour_list",
                           self, "active_contour_index",
                           rows=2)
-        row.template_list("Include_Ves_UL_draw_item","included_in_ser_file",
+        col = row.column(align=True)
+        col.operator("contour_vesicle.include_contour", icon='FORWARD', text='')
+        col.operator("contour_vesicle.include_filtered_contour", icon='EXPORT', text='')
+        col.operator("contour_vesicle.remove_contour_all", icon='X', text='')
+
+        col = row.column()
+        col.template_list("Include_Ves_UL_draw_item","included_in_ser_file",
                           bpy.context.scene.contour_vesicle, "include_list",
                           self, "active_include_index",
                           rows=2)
+        col = row.column(align=True)
+        col.operator("contour_vesicle.remove_contour", icon='ZOOMOUT', text='')
+        col.operator("contour_vesicle.import_selected_contour", icon='CURVE_DATA', text='')
+        col.operator("contour_vesicle.import_all_contours", icon='POSE_DATA', text='')
+
         row = layout.row()
         row.prop(self,"vesicle_import",text="Import as Vesicles")
         row = layout.row()
-        row.operator("contour_vesicle.include_contour", text="Include Contour") 
-        row.operator("contour_vesicle.remove_contour", text="Remove Contour")
-
-        row = layout.row()
-        row.operator("contour_vesicle.include_filtered_contour", text = "Include Current Filtered Contours") 
-        row.operator("contour_vesicle.import_selected_contour", text="Import Selected Include Contour")
-
-        row = layout.row()
-        row.operator("contour_vesicle.remove_contour_all", text = "Clear Contour List") 
-        row.operator("contour_vesicle.import_all_contours", text="Import All Included Contours")
-
 

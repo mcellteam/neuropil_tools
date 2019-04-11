@@ -621,7 +621,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
         gamer_mip.smooth_iter = 10
         gamer_mip.preserve_ridges = True
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.beautify_fill()
+        bpy.ops.mesh.beautify_fill(angle_limit=1.57)
         bpy.ops.mesh.subdivide(number_cuts=2)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
@@ -774,7 +774,9 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     filepath = StringProperty(name = "RECONSTRUCT Series Filepath", default= "")
     min_section = StringProperty(name="Minimum Reconstruct Section File", default= "")
     max_section = StringProperty(name="Maximum Reconstruct Section File", default= "")
-    section_thickness = StringProperty(name="Maximum Reconstruct Section File", default= "0.05")
+    section_thickness = StringProperty(name="Section Thickness", default= "0.05")
+    min_sample_interval = FloatProperty(name="Minimum Sample Interval", default=0.01)
+    max_sample_interval = FloatProperty(name="Maximum Sample Interval", default=0.05)
     filt = StringProperty(name = "Filter for Object list", default = "d[0-9][0-9]sp[0-9][0-9]")
 
 
@@ -1004,7 +1006,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             contour = "-I " + str(i.name) + " "  
             contour_name += contour        
         
-        interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, contour_name, interp_file)
+        interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --section_thickness %s  --min_sample_interval %.4g --max_sample_interval %.4g --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, self.section_thickness, self.min_sample_interval, self.max_sample_interval, contour_name, interp_file)
         print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
         subprocess.check_output([interpolate_cmd],shell=True)
 
@@ -1013,7 +1015,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             contour_name = str(i.name)
             print('\nGenerating Mesh for: %s\n' % (contour_name))
             if bpy.data.objects.get(contour_name) is None:
-                tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
+                tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.001 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
                 print('\nTiling Object: \n%s\n' % (tile_cmd))
                 subprocess.check_output([tile_cmd],shell=True)
             #make obj
@@ -1051,12 +1053,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         contour_name  = contour.name
         print(contour_name)
         obj = None
-        interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 -I %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, contour_name, interp_file)
+        interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --section_thickness %s --min_sample_interval %.4g --max_sample_interval %.4g --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 -I %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, self.section_thickness, self.min_sample_interval, self.max_sample_interval, contour_name, interp_file)
         print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
         subprocess.check_output([interpolate_cmd],shell=True)
 
         if bpy.data.objects.get(contour_name) is None:
-            tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
+            tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.001 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
             print('\nTiling Object: \n%s\n' % (tile_cmd))
             subprocess.check_output([tile_cmd],shell=True)
             #make obj
@@ -1082,7 +1084,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 os.remove(out_file + '/'+ name + '_fix.rawc')
             if os.path.isfile(out_file + '/'+ name + '.obj'):
                 os.remove(out_file + '/'+ name + '.obj')
-            tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z .05 -C 0.01 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, interp_file)
+            tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z .05 -C 0.001 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, interp_file)
             print('\nTiling Object: \n%s\n' % (tile_cmd))
             subprocess.check_output([tile_cmd],shell=True)
             #make obj
@@ -1759,6 +1761,9 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         row.label(text = 'section thickness: ' + self.section_thickness) 
         row.label(text = 'min section #: ' + self.min_section) 
         row.label(text = 'max section #: ' + self.max_section) 
+        row = layout.row()
+        row.prop(self,'min_sample_interval',text='Min Sample Interval:')
+        row.prop(self,'max_sample_interval',text='Max Sample Interval:')
 
         row = layout.row()
         row.label(text="Trace List:", icon='CURVE_DATA')
@@ -1768,7 +1773,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         col.template_list("Trace_UL_draw_item","contours_in_ser_file",
                           self, "contour_list",
                           self, "active_contour_index",
-                          rows=4)
+                          rows=5)
         col = row.column(align=True)
         col.operator('processor_tool.include_contour', icon='FORWARD', text='') 
         col.operator('processor_tool.include_filter_contour', icon='EXPORT', text='') 
@@ -1778,11 +1783,12 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         col.template_list("Include_UL_draw_item","included_in_ser_file",
                           self, "include_list",
                           self, "active_include_index",
-                          rows=4)
+                          rows=5)
         col = row.column(align=True)
         col.operator('processor_tool.remove_contour', icon='ZOOMOUT', text='')
         col.operator('processor_tool.generate_mesh_object_single', icon='MESH_ICOSPHERE', text='')
         col.operator('processor_tool.generate_mesh_object', icon='POSE_DATA', text='')
+        col.label('', icon='BLANK1')
         col.operator('processor_tool.fix_mesh', icon='MODIFIER', text='')
         col.operator('processor_tool.remove_components', icon='SEQ_SEQUENCER', text='')
 
