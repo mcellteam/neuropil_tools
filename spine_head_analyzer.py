@@ -2021,7 +2021,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
 #            row.operator("spine_head_analyzer.recompute_volumes", text="Recompute All Volumes")
 
             row = layout.row()
-            row.label(text="Contact Patterns:",icon='HAND')
+            row.label(text="Contact Patterns Associated With Object:  " + active_obj.name, icon='HAND')
             row = layout.row() 
             row.template_list("NEUROPIL_UL_contact_patterns","contact_pattern_list",
                           active_obj.processor, "contact_pattern_match_list",
@@ -2031,7 +2031,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
             row = layout.row()
             row = layout.row()
             row = layout.row()
-            row.label(text="Contact Regions:", icon='STYLUS_PRESSURE')
+            row.label(text='Contact Regions On Object:  ' + active_obj.name + '  Matching Pattern:  ' + active_obj.processor.contact_pattern_match_list[self.active_contact_pattern_index].name, icon='STYLUS_PRESSURE')
             row = layout.row() 
             col = row.column()
             col.template_list("NEUROPIL_UL_check_psd","spine_psd_list",
@@ -2048,7 +2048,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
             #row.prop(self,"make_shell_spine_opt",text="Make Object Shell")
             if psd_region_name != None:
                 row = layout.row()
-                row.operator("spine_head_analyzer.select_psd", text="Select Contact Region")
+                row.operator("spine_head_analyzer.select_psd", text="Select Faces of Contact Region:  " + active_obj.mcell.regions.region_list[self.active_psd_region_index].name)
 
             '''
             if psd_region_name != None:
@@ -2126,7 +2126,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
                     mesh = active_obj.data
                     row = layout.row()
                     row.enabled = (mesh.total_face_sel > 0)
-                    row.operator("spine_head_analyzer.compute_volume", text="Compute Varicosity Volume")
+                    row.operator("spine_head_analyzer.compute_volume", text="Compute Analysis of Varicosity:  " + 'PLACE_HOLDER_FOR_VARICOSITY_NAME')
                     row = layout.row()
                     if (psd.volume != 0.0):
                         row = layout.row()

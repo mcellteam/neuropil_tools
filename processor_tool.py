@@ -775,8 +775,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
     min_section = StringProperty(name="Minimum Reconstruct Section File", default= "")
     max_section = StringProperty(name="Maximum Reconstruct Section File", default= "")
     section_thickness = StringProperty(name="Section Thickness", default= "0.05")
-    min_sample_interval = FloatProperty(name="Minimum Sample Interval", default=0.01)
-    max_sample_interval = FloatProperty(name="Maximum Sample Interval", default=0.05)
+    min_sample_interval = FloatProperty(name="Minimum Sample Interval", description='Minimum interpolation interval in microns', default=0.01, precision=4)
+    max_sample_interval = FloatProperty(name="Maximum Sample Interval", description='Maximum interpolation interval in microns', default=0.05, precision=4)
     filt = StringProperty(name = "Filter for Object list", default = "d[0-9][0-9]sp[0-9][0-9]")
 
 
