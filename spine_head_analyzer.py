@@ -345,6 +345,7 @@ class NEUROPIL_UL_check_psd(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
+        self.use_filter_show = True
         scn = context.scene                  
         active_obj = context.active_object
         psd = active_obj.spine_head_ana.psd_list.get(item.name)  
@@ -1651,9 +1652,6 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
     psd_list = CollectionProperty(
         type=SpineHeadAnalyzerPSDProperty, name="Spine PSD List")
-    sp_list = CollectionProperty(
-        type=SpineHeadAnalyzerPSDProperty, name="contact list")
-    active_spn_region_index = IntProperty(name="Active SPN Index", default=0)
     active_psd_region_index = IntProperty(name="Active PSD Index", default=0)
     active_contact_pattern_index = IntProperty(name="Active Contact Pattern Index", default=0)
     n_components = IntProperty(name="Number of Components in Mesh", default=0)
