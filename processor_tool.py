@@ -62,6 +62,35 @@ def unregister():
 
 #Define Operators
 
+contour_filter_pattern = ''
+
+def filter_items_by_pattern(self, context, data, propname):
+
+  helper_funcs = bpy.types.UI_UL_list
+  
+  items = getattr(data, propname)
+
+  flt_flags = []
+  flt_neworder = []
+
+  filt_pat = self.filter_name
+  if filt_pat:
+    # convert filter patterns to formal regex
+    filt_pat = self.filter_name
+    filt_regex = filt_pat.replace('#','[0-9]')
+    filt_regex = filt_regex.replace('*','.*')
+  
+    filt_recomp = re.compile(filt_regex)
+          
+    flt_flags = [ self.bitflag_filter_item*((filt_recomp.fullmatch(item.name)!=None)) for item in items ]
+  else:
+    flt_flags = [self.bitflag_filter_item]*len(items)
+
+  flt_neworder = helper_funcs.sort_items_by_name(items, 'name')
+
+  return flt_flags, flt_neworder
+
+
 class NEUROPIL_OT_impser(bpy.types.Operator, ImportHelper):
     """Import from RECONSTRUCT Series file format (.ser)"""
     bl_idname = "processor_tool.impser"
@@ -160,7 +189,7 @@ class NEUROPIL_OT_tile_one_mesh(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        obj = context.scene.test_tool.generate_mesh_object_single(context)
+        context.scene.test_tool.generate_mesh_object_single(context)
         context.scene.test_tool.fix_mesh(context,"single")
         return {'FINISHED'}
 
@@ -185,25 +214,6 @@ class NEUROPIL_OT_select_obj(bpy.types.Operator):
     def execute(self, context):
         context.scene.test_tool.select_obj(context,'spine')
         return {'FINISHED'}
-
-
-#class NEUROPIL_OT_ImportMultipleObjs(bpy.types.Operator, ImportHelper):
-#    """This appears in the tooltip of the operator and in the generated docs"""
-#    bl_idname = "import_scene.multiple_objs"
-#    bl_label = "Import multiple OBJ's"
-#    bl_options = {'PRESET', 'UNDO'}
-
-    # ImportHelper mixin class uses this
-#    filename_ext = ".obj"
-
-#    filter_glob = StringProperty(
-#            default="*.obj",
-#            options={'HIDDEN'},
-#            )
-
-    #def execute(self, context):
-    #    context.object.processor.multiple_objs(context)
-    #    return {'FINISHED'}
 
 
 class NEUROPIL_OT_add_contact_pattern(bpy.types.Operator):
@@ -333,16 +343,26 @@ class GAMER_OT_normal_smooth(bpy.types.Operator):
 class Trace_UL_draw_item(bpy.types.UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data,
-                 active_propname, index):
+                 active_propname, index, flt_flags):
        
         self.use_filter_sort_alpha = True
         layout.label(item.name)
 
 
+    def filter_items(self, context, data, propname):
+      global contour_filter_pattern
+
+      flt_flags, flt_neworder = filter_items_by_pattern(self,context,data,propname)
+      contour_filter_pattern = self.filter_name
+
+      return flt_flags, flt_neworder
+
+
+
 class Include_UL_draw_item(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data,
-                  active_propname, index):
+                  active_propname, index, flt_flags):
         scn = bpy.context.scene
         self.use_filter_sort_alpha = True    
         #if item.non_manifold == True:
@@ -357,6 +377,12 @@ class Include_UL_draw_item(bpy.types.UIList):
             layout.label(item.name)
 
 
+    def filter_items(self, context, data, propname):
+      flt_flags, flt_neworder = filter_items_by_pattern(self,context,data,propname)
+      return flt_flags, flt_neworder
+
+
+
 class Contact_Pattern_UL_draw_item(bpy.types.UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data,
@@ -366,12 +392,13 @@ class Contact_Pattern_UL_draw_item(bpy.types.UIList):
         layout.label(item.name)
 
 
+
 class SCN_UL_obj_draw_item(bpy.types.UIList):
 
     use_base_name_filter = BoolProperty(name = "Filter Object List by Base Names", default = False)
   
     def draw_item(self, context, layout, data, item, icon, active_data,
-                  active_propname, index, flt_flag):
+                  active_propname, index, flt_flags):
 
         self.use_filter_show = True
         match_text = '    [ '
@@ -387,6 +414,7 @@ class SCN_UL_obj_draw_item(bpy.types.UIList):
             layout.label(item.name + match_text, icon='MOD_SMOOTH')
         else:
             layout.label(item.name + match_text)
+
 
     def draw_filter(self, context, layout):
         box1 = layout.box()
@@ -513,9 +541,7 @@ class IncludeNameSceneProperty(bpy.types.PropertyGroup):
     generated = BoolProperty(name = "Mesh Object Generated", default = False)
     multi_component = BoolProperty(name = "Multiple Components in Mesh", default = False)
     non_manifold = BoolProperty(name = "Non-manifold Mesh", default = False) 
-    genus_issue = BoolProperty(name = "Genus > 0", default = False)         
-    filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
-    spine_filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
+    genus_issue = BoolProperty(name = "True if Genus > 0", default = False)         
     problem = BoolProperty(name = "Problem Tagging", default = False)
     
     def init_include(self,context,name):
@@ -612,38 +638,38 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
 
 
     def smooth(self, context):
-        """ Smooth using GAMer """
-        print('Smoothing: %s' % (context.active_object.name))
-        gamer_mip = context.scene.gamer.mesh_improve_panel
-        gamer_mip.dense_rate = 2.5
-        gamer_mip.dense_iter = 1
-        gamer_mip.max_min_angle = 20.0
-        gamer_mip.smooth_iter = 10
-        gamer_mip.preserve_ridges = True
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.beautify_fill(angle_limit=1.57)
-        bpy.ops.mesh.subdivide(number_cuts=2)
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
-        bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
-        bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
-        bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
-        bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
-        bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
-        bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
-        bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
-        bpy.ops.gamer.smooth('INVOKE_DEFAULT')
-        bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
-        bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
-        bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
-        bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
-#        bpy.ops.mesh.select_all(action='DESELECT')
-#        bpy.ops.object.mode_set(mode='OBJECT')
-        self.smoothed = True
-        obj = context.active_object
-        obj.processor.update_contact_pattern_match_list(context, obj)
+        if not self.smoothed:
+          """ Smooth using GAMer """
+          print('Smoothing: %s' % (context.active_object.name))
+          gamer_mip = context.scene.gamer.mesh_improve_panel
+          gamer_mip.dense_rate = 2.5
+          gamer_mip.dense_iter = 1
+          gamer_mip.max_min_angle = 20.0
+          gamer_mip.smooth_iter = 10
+          gamer_mip.preserve_ridges = True
+          bpy.ops.object.mode_set(mode='EDIT')
+          bpy.ops.mesh.beautify_fill(angle_limit=1.57)
+          bpy.ops.mesh.subdivide(number_cuts=2)
+          bpy.ops.object.mode_set(mode='OBJECT')
+          bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
+          bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
+          bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
+          bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
+          bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
+          bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
+          bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
+          bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
+          bpy.ops.gamer.smooth('INVOKE_DEFAULT')
+          bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
+          bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
+          bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
+          bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
+          self.smoothed = True
+          obj = context.active_object
+          obj.processor.update_contact_pattern_match_list(context, obj)
+        else:
+          print('Not smoothing object, already smoothed: %s' % (context.active_object.name))
 
-        # ADD OBJ2MCELL
         return('FINISHED')
 
 
@@ -811,6 +837,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
 
     def generate_contour_list(self, context, filepath):
+
+        # Begin by clearing the current contour list
+        self.remove_contour_all(context)
+
         self.filepath = filepath
         ser_file = self.filepath
         ser_prefix = os.path.splitext(self.filepath)[0]
@@ -890,19 +920,28 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
 
     def include_filter_contour(self,context):
-#  FIXME:  add a proper regex trace filter method:
-#        for item in self.contour_list:
-#            if ((re.search(trace_filter_name, item.name)) or (re.search(trace_filter_name, item.name)))  and item.name not in self.include_list:
-#                self.add_contour(context, item.name, "include")
-        pass
-        return(self.include_list)
+      if contour_filter_pattern:
+        # convert contour filter pattern to formal regex
+        filt_pat = contour_filter_pattern
+        filt_regex = filt_pat.replace('#','[0-9]')
+        filt_regex = filt_regex.replace('*','.*')
+    
+        filt_recomp = re.compile(filt_regex)
+        filt_contour_list = [ item for item in self.contour_list if filt_recomp.fullmatch(item.name) != None and item.name not in self.include_list ]
+      else:
+        filt_contour_list = [ item for item in self.contour_list if item.name not in self.include_list ]
+
+      for item in filt_contour_list:
+        self.add_contour(context, item.name, "include")
+
+      return
 
 
     def include_contour(self, context):
         name = self.contour_list[self.active_contour_index].name
         if name not in self.include_list:
             self.add_contour(context, name, "include")
-        return(self.include_list)
+        return
 
 
     def remove_contour(self, context):
@@ -934,21 +973,15 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     os.remove(out_file + '/'+ name + '.obj')
             self.include_list.remove(self.active_include_index)
                
-        return(self.include_list)
+        return
 
 
     def remove_contour_all(self, context):
-        #for name in self.contour_list:
-        #name = self.include_list[self.active_include_index].name
-        ser_dir = os.path.split(self.filepath)[0]
-        ser_file = os.path.split(self.filepath)[-1]
-
-        ser_prefix = os.path.splitext(ser_file)[0]
-        out_file = ser_dir + '/' + ser_prefix + "_output"
 
         self.contour_list.clear()
+        self.active_contour_index = 0
                
-        return(self.contour_list)
+        return
 
 
     def remove_components(self,context):
@@ -960,6 +993,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
     def generate_mesh_object(self, context):
         #set variables
+        scn = bpy.context.scene
         ser_dir = os.path.split(self.filepath)[0]
         ser_file = os.path.split(self.filepath)[-1]
         bin_dir = os.path.join(os.path.dirname(__file__), 'bin') 
@@ -974,18 +1008,24 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         interp_file = ser_prefix + "_interp" 
         
         #interpolate traces
-        contour_name = " "
-        for i in self.include_list: 
-            contour = "-I " + str(i.name) + " "  
-            contour_name += contour        
+        contour_names = '' 
+        for item in self.include_list:
+            if self.include_list[str(item.name)].generated == True:
+              print('Not generating object, already generated: %s' % (str(item.name)))
+              continue
+            inc_contour = "-I " + str(item.name) + " "  
+            contour_names += inc_contour        
         
-        interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --section_thickness %s  --min_sample_interval %.4g --max_sample_interval %.4g --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, self.section_thickness, self.min_sample_interval, self.max_sample_interval, contour_name, interp_file)
-        print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
-        subprocess.check_output([interpolate_cmd],shell=True)
+        if contour_names != '':
+          interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --section_thickness %s  --min_sample_interval %.4g --max_sample_interval %.4g --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, self.section_thickness, self.min_sample_interval, self.max_sample_interval, contour_names, interp_file)
+          print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
+          subprocess.check_output([interpolate_cmd],shell=True)
 
         #tile traces
-        for i in self.include_list:
-            contour_name = str(i.name)
+        for item in self.include_list:
+            if self.include_list[str(item.name)].generated == True:
+              continue
+            contour_name = str(item.name)
             print('\nGenerating Mesh for: %s\n' % (contour_name))
             if bpy.data.objects.get(contour_name) is None:
                 tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z %s -C 0.001 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, self.section_thickness, interp_file)
@@ -1002,9 +1042,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     obj.select = True
                     context.scene.objects.active = obj
                     obj.processor.update_contact_pattern_match_list(context, obj)
-        #obj = bpy.context.scene.objects[contour_name]
-         #   obj != None:
-                if i.multi_component == True:
+                if item.multi_component == True:
                     print("Multiple Components: %s" % (str(self.include_list[contour_name])))
 
   
@@ -1024,8 +1062,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
        
         contour = self.include_list[self.active_include_index]
         contour_name  = contour.name
-        print(contour_name)
-        obj = None
+        if contour.generated == True:
+          print('Not generating object, already generated: %s' % (contour_name))
+          return
+
         interpolate_cmd = interpolate_bin + " -i %s -f %s -o %s --min_section=%s --max_section=%s --section_thickness %s --min_sample_interval %.4g --max_sample_interval %.4g --curvature_gain=1E2 --proximity_gain=3 --min_point_per_contour=4 --deviation_threshold=0.005 -I %s -w %s" % (ser_dir, ser_prefix, out_file, self.min_section, self.max_section, self.section_thickness, self.min_sample_interval, self.max_sample_interval, contour_name, interp_file)
         print('\nInterpolating Series: \n%s\n' % (interpolate_cmd))
         subprocess.check_output([interpolate_cmd],shell=True)
@@ -1045,34 +1085,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 obj.select = True
                 context.scene.objects.active = obj
                 obj.processor.update_contact_pattern_match_list(context, obj)
-        '''
-        else:
-            obj = bpy.data.objects.get(contour_name)
-            name = obj.name
-            m = obj.data
-            context.scene.objects.unlink(obj)
-            bpy.data.objects.remove(obj)
-            bpy.data.meshes.remove(m)
-            if os.path.isfile(out_file + '/'+ name + '_fix.rawc'):
-                os.remove(out_file + '/'+ name + '_fix.rawc')
-            if os.path.isfile(out_file + '/'+ name + '.obj'):
-                os.remove(out_file + '/'+ name + '.obj')
-            tile_cmd = tile_bin + " -f ser -n %s -d %s -c %s -s  %s %s -z .05 -C 0.001 -e 1e-15 -o raw -r %s" % (out_file, out_file, contour_name, self.min_section, self.max_section, interp_file)
-            print('\nTiling Object: \n%s\n' % (tile_cmd))
-            subprocess.check_output([tile_cmd],shell=True)
-            #make obj
-            rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
-            subprocess.check_output([rawc2obj_cmd],shell=True)
-            #import obj
-            bpy.ops.import_scene.obj(filepath=out_file + '/' + contour_name  + ".obj", axis_forward='Y', axis_up="Z")
-        #obj = bpy.context.scene.objects[contour_name]
-         #   obj != None:
-            self.include_list[contour_name].generated = True
-        '''
 
         if self.include_list[contour_name].multi_component == True:
             print("Multiple Components: %s" % (str(self.include_list[contour_name])))
-        return (obj)
+        return
 
 
     def fix_mesh(self, context, mode):
@@ -1337,10 +1353,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
         c_object_list.extend([obj.name for obj in scn.objects if full_recomp.fullmatch(obj.name)!= None])
 
-      obj_list = [obj for obj in scn.objects if obj.name not in c_object_list and obj.type == 'MESH']
+      obj_name_list = sorted([obj.name for obj in scn.objects if obj.name not in c_object_list and obj.type == 'MESH'])
 
-      for obj in obj_list:
-        if (self.include_list[obj.name].multi_component == False) and (self.include_list[obj.name].non_manifold == False) and(obj.processor.smoothed == False):
+      for obj_name in obj_name_list:
+        if (self.include_list[obj_name].multi_component == False) and (self.include_list[obj_name].non_manifold == False):
+          obj = scn.objects[obj_name]
           obj.processor.select_obj(context, obj)
           obj.processor.smooth(context)
 
