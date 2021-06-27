@@ -27,8 +27,7 @@ bl_info = {
     "name": "Neuropil Tools",
     "author": "Cailey Bromer, Tom Bartol",
     "version": (1, 2, 0),
-    "blender": (2, 78, 1),
-    "api": 55057,
+    "blender": (2, 93, 0),
     "location": "View3D > Tools > Neuropil Tools Panel",
     "description": "Modeling Tools for Brain Neuropil",
     "warning": "",
@@ -64,11 +63,28 @@ else:
 
 import bpy
 
+
+def npt_register():
+    io_import_multiple_objs.register()
+    processor_tool.register()
+    contour_vesicle_importer.register()
+    spine_head_analyzer.register()
+    connectivity_tool.register()
+
+
+def npt_unregister():
+    io_import_multiple_objs.register()
+    processor_tool.register()
+    contour_vesicle_importer.register()
+    spine_head_analyzer.register()
+    connectivity_tool.register()
+
+
 # Enable the Addon
 def register():
 
     # register all of the components of the Addon
-    bpy.utils.register_module(__name__)
+    npt_register()
 
     # Extend the metadata of bpy.types.Object with our Processor Tool metadata
     bpy.types.Object.processor = bpy.props.PointerProperty(
@@ -98,7 +114,6 @@ def register():
     bpy.types.Scene.volume_analyzer = bpy.props.PointerProperty(
         type=spine_head_analyzer.SpineHeadAnalyzerSceneProperty)
 
-
     print("Neuropil Tools registered")
 
  
@@ -106,14 +121,14 @@ def register():
 # Disable the Addon
 def unregister():
     # unregister all of the components of the Addon
-    bpy.utils.unregister_module(__name__)
+    npt_unregister()
+
     #bpy.types.INFO_MT_file_import.remove(menu_func_import)
     print("Neuropil Tools unregistered")
 
 #def register():
 #    bpy.utils.register_class(ImportMultipleObjs)
     
-
 
 #def unregister():
 #    bpy.utils.unregister_class(ImportMultipleObjs)

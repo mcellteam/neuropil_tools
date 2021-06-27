@@ -34,14 +34,6 @@ import re
 import neuropil_tools
 import cellblender
 
-# We use per module class registration/unregistration
-def register():
-    bpy.utils.register_module(__name__)
-
-
-def unregister():
-    bpy.utils.unregister_module(__name__)
-
 
 # Spine Head Analyzer Operators:
 
@@ -109,13 +101,13 @@ class CONNECTIVITY_UL_psd_draw_item(bpy.types.UIList):
                   active_propname, index):
         self.filter_name = "*sy*"
         active_obj = context.active_object
-        layout.label(item.name)
+        layout.label(text=item.name)
 
 
 class CONNECTIVITY_PT_ConnectivityTool(bpy.types.Panel):
     bl_label = "Connectivity Tool"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Neuropil Tools"
 
@@ -127,7 +119,7 @@ class CONNECTIVITY_PT_ConnectivityTool(bpy.types.Panel):
 # Connectivity Tool Properties:
 
 class ConnectivityToolObjectProperty(bpy.types.PropertyGroup):
-    active_psd_region_index = IntProperty(name="Active PSD Index", default=0)
+    active_psd_region_index: IntProperty(name="Active PSD Index", default=0)
 
     def get_active_psd(self,context):
         active_obj = context.active_object
@@ -242,3 +234,23 @@ class ConnectivityToolObjectProperty(bpy.types.PropertyGroup):
             if psd_region_name != None:
                 row = layout.row()
                 row.operator("connectivity_tool.show_synaptic_partner", text="Show Synaptic Partner")
+
+
+
+classes = ( 
+            CONNECTIVITY_OT_show_synaptic_partner,
+            CONNECTIVITY_OT_output_pre_to_post,
+            CONNECTIVITY_OT_output_post_to_pre,
+            CONNECTIVITY_UL_psd_draw_item,
+            CONNECTIVITY_PT_ConnectivityTool,
+            ConnectivityToolObjectProperty,
+          )
+
+def register():
+    for cls in classes:
+      bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in reversed(classes):
+      bpy.utils.unregister_class(cls)
+

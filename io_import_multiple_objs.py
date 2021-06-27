@@ -53,71 +53,71 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
     # ImportHelper mixin class uses this
     filename_ext = ".obj"
 
-    filter_glob = StringProperty(
+    filter_glob: StringProperty(
             default="*.obj",
             options={'HIDDEN'},
             )
 
     # Selected files
-    files = CollectionProperty(type=bpy.types.PropertyGroup)
+    files: CollectionProperty(type=bpy.types.PropertyGroup)
 
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.
-    ngons_setting = BoolProperty(
+    ngons_setting: BoolProperty(
             name="NGons",
             description="Import faces with more than 4 verts as ngons",
             default=True,
             )
-    edges_setting = BoolProperty(
+    edges_setting: BoolProperty(
             name="Lines",
             description="Import lines and faces with 2 verts as edge",
             default=True,
             )
-    smooth_groups_setting = BoolProperty(
+    smooth_groups_setting: BoolProperty(
             name="Smooth Groups",
             description="Surround smooth groups by sharp edges",
             default=True,
             )
 
-    split_objects_setting = BoolProperty(
+    split_objects_setting: BoolProperty(
             name="Object",
             description="Import OBJ Objects into Blender Objects",
             default=True,
             )
-    split_groups_setting = BoolProperty(
+    split_groups_setting: BoolProperty(
             name="Group",
             description="Import OBJ Groups into Blender Objects",
             default=True,
             )
 
-    groups_as_vgroups_setting = BoolProperty(
+    groups_as_vgroups_setting: BoolProperty(
             name="Poly Groups",
             description="Import OBJ groups as vertex groups",
             default=False,
             )
 
-    image_search_setting = BoolProperty(
+    image_search_setting: BoolProperty(
             name="Image Search",
             description="Search subdirs for any associated images "
                         "(Warning, may be slow)",
             default=True,
             )
 
-    split_mode_setting = EnumProperty(
+    split_mode_setting: EnumProperty(
             name="Split",
             items=(('ON', "Split", "Split geometry, omits unused verts"),
                    ('OFF', "Keep Vert Order", "Keep vertex order from file"),
                    ),
             )
 
-    clamp_size_setting = FloatProperty(
+    clamp_size_setting: FloatProperty(
             name="Clamp Size",
             description="Clamp bounds under this value (zero to disable)",
             min=0.0, max=1000.0,
             soft_min=0.0, soft_max=1000.0,
             default=0.0,
             )
-    axis_forward_setting = EnumProperty(
+    axis_forward_setting: EnumProperty(
             name="Forward",
             items=(('X', "X Forward", ""),
                    ('Y', "Y Forward", ""),
@@ -129,7 +129,7 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
             default='Y',
             )
 
-    axis_up_setting = EnumProperty(
+    axis_up_setting: EnumProperty(
             name="Up",
             items=(('X', "X Up", ""),
                    ('Y', "Y Up", ""),
@@ -140,7 +140,7 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
                    ),
             default='Z',
             )
-    scale_setting = FloatProperty(
+    scale_setting: FloatProperty(
             name="Scale Size",
             description="Scale objects",
             min=0.0, max=1000.0,
@@ -215,12 +215,12 @@ def menu_func_import(self, context):
 
 def register():
     bpy.utils.register_class(ImportMultipleObjs)
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 
 def unregister():
     bpy.utils.unregister_class(ImportMultipleObjs)
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 
 
 if __name__ == "__main__":

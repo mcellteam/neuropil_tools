@@ -33,8 +33,8 @@ import re
 import bpy
 # IMPORT SWIG MODULE(s)
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, \
-    FloatProperty, FloatVectorProperty, IntProperty, \
-    IntVectorProperty, PointerProperty, StringProperty
+                      FloatProperty, FloatVectorProperty, IntProperty, \
+                      IntVectorProperty, PointerProperty, StringProperty
 import mathutils
 
 from bpy_extras.io_utils import ImportHelper
@@ -48,15 +48,6 @@ import glob
 import neuropil_tools
 import cellblender
 
-# register and unregister are required for Blender Addons
-# We use per module class registration/unregistration
-
-
-def register():
-    bpy.utils.register_module(__name__)
-
-def unregister():
-    bpy.utils.unregister_module(__name__)
 
 #Define operators
 
@@ -72,8 +63,8 @@ class NEUROPIL_OT_impser(bpy.types.Operator, ImportHelper):
     bl_options = {'UNDO'}            
 
     filename_ext = ".ser"
-    filter_glob = StringProperty(default="*.ser", options={'HIDDEN'})
-    filepath = StringProperty(subtype='FILE_PATH')
+    filter_glob: StringProperty(default="*.ser", options={'HIDDEN'})
+    filepath: StringProperty(subtype='FILE_PATH')
 
     def execute(self, context):  
         context.scene.contour_vesicle.read_contour_list(context,self.filepath)
@@ -155,7 +146,7 @@ class NEUROPIL_OT_import_selected_contour(bpy.types.Operator):
 class NEUROPIL_PT_ContourVesicleImporter(bpy.types.Panel):
     bl_label = "Contour/Vesicle Importer"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Neuropil Tools"
 
@@ -173,7 +164,7 @@ class Contour_Ves_UL_draw_item(bpy.types.UIList):
        
         trace_filter_name = self.filter_name
         self.use_filter_sort_alpha = True
-        layout.label(item.name)
+        layout.label(text=item.name)
 
 
 class Include_Ves_UL_draw_item(bpy.types.UIList):
@@ -184,15 +175,15 @@ class Include_Ves_UL_draw_item(bpy.types.UIList):
         self.use_filter_sort_alpha = True    
         if item.imported == True:
             if item.vesicle_obj:
-              layout.label(item.name, icon='GROUP_VERTEX')
+              layout.label(text=item.name, icon='GROUP_VERTEX')
             else:
-              layout.label(item.name, icon='SORTSIZE')
+              layout.label(text=item.name, icon='SORTSIZE')
         else:
-            layout.label(item.name)
+            layout.label(text=item.name)
 
 
 class ContourVesicleObjectProperty(bpy.types.PropertyGroup):
-    vesicle_obj = BoolProperty(name="OBJ is Vesicle", default=False)
+    vesicle_obj: BoolProperty(name="OBJ is Vesicle", default=False)
 
     # Set obj as active object with entire mesh unhidden and selected
     #   with Object Mode set
@@ -201,7 +192,7 @@ class ContourVesicleObjectProperty(bpy.types.PropertyGroup):
           bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
         obj.select = True
-        bpy.context.scene.objects.active = obj
+        bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.reveal()
         bpy.ops.mesh.select_all(action='SELECT')
@@ -209,17 +200,17 @@ class ContourVesicleObjectProperty(bpy.types.PropertyGroup):
 
 
 class ContourNameProperty(bpy.types.PropertyGroup):
-    name = StringProperty(name= "Contour name", default ="")
+    name: StringProperty(name= "Contour name", default ="")
    
     def init_contour(self,context,name):
         self.name = name
 
 
 class IncludeNameProperty(bpy.types.PropertyGroup):
-    name = StringProperty(name= "Include name", default ="")
-    imported = BoolProperty(name = "Object Imported", default = False)
-    vesicle_obj = BoolProperty(name="OBJ is Vesicle", default=False)
-    filter_name = StringProperty(name="Read manually filtered names for Include", default= "")
+    name: StringProperty(name= "Include name", default ="")
+    imported: BoolProperty(name = "Object Imported", default = False)
+    vesicle_obj: BoolProperty(name="OBJ is Vesicle", default=False)
+    filter_name: StringProperty(name="Read manually filtered names for Include", default= "")
 
     def init_include(self,context,name):
         self.name = name
@@ -227,17 +218,17 @@ class IncludeNameProperty(bpy.types.PropertyGroup):
 
 
 class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
-    contour_list = CollectionProperty(
+    contour_list: CollectionProperty(
         type = ContourNameProperty, name = "Contour List")
-    active_contour_index = IntProperty(name="Active Contour Index", default=0)
-    include_list = CollectionProperty(
+    active_contour_index: IntProperty(name="Active Contour Index", default=0)
+    include_list: CollectionProperty(
         type = IncludeNameProperty, name = "Include List")
-    active_include_index = IntProperty(name="Active Include Index", default=0)
-    filepath = StringProperty(name = "Remember Active Filepath", default= "")
-    min_section = StringProperty(name="Minimum Reconstruct Section File", default= "")
-    max_section = StringProperty(name="Maximum Reconstruct Section File", default= "")
-    section_thickness = StringProperty(name="Maximum Reconstruct Section File", default= "0.05")
-    vesicle_import = BoolProperty(name="Import Contours as Vesicles", default=False)
+    active_include_index: IntProperty(name="Active Include Index", default=0)
+    filepath: StringProperty(name = "Remember Active Filepath", default= "")
+    min_section: StringProperty(name="Minimum Reconstruct Section File", default= "")
+    max_section: StringProperty(name="Maximum Reconstruct Section File", default= "")
+    section_thickness: StringProperty(name="Maximum Reconstruct Section File", default= "0.05")
+    vesicle_import: BoolProperty(name="Import Contours as Vesicles", default=False)
     
 
     def add_contour(self,context,contour_name,mode):
@@ -353,11 +344,11 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
 
             if bpy.data.objects.get(obj_name) is not None:
                 bpy.ops.object.select_all(action='DESELECT')
-                obj = bpy.context.scene.objects[obj_name]
+                obj = bpy.context.scene.collection.children[0].objects[obj_name]
                 obj.select = True
-                context.scene.objects.active = obj
+                context.view_layer.objects.active = obj
                 m = obj.data
-                context.scene.objects.unlink(obj)
+                context.scene.collection.children[0].objects.unlink(obj)
                 bpy.data.objects.remove(obj)
                 bpy.data.meshes.remove(m)
                 if os.path.exists(out_file + '/'+ obj_name + '_tiles.rawc'):
@@ -427,7 +418,7 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         row.label(text='Import Reconstruct Series:', icon='MOD_ARRAY')
         row = layout.row(align=True)
         row.prop(self, "filepath", text='')
-        row.operator('contour_vesicle.impser', icon='FILESEL', text='')
+        row.operator('contour_vesicle.impser', icon='FILEBROWSER', text='')
 
         row = layout.row()
         row.label(text = 'section thickness: ' + self.section_thickness)
@@ -454,11 +445,37 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
                           self, "active_include_index",
                           rows=2)
         col = row.column(align=True)
-        col.operator("contour_vesicle.remove_contour", icon='ZOOMOUT', text='')
+        col.operator("contour_vesicle.remove_contour", icon='REMOVE', text='')
         col.operator("contour_vesicle.import_selected_contour", icon='CURVE_DATA', text='')
-        col.operator("contour_vesicle.import_all_contours", icon='POSE_DATA', text='')
+        col.operator("contour_vesicle.import_all_contours", icon='ARMATURE_DATA', text='')
 
         row = layout.row()
         row.prop(self,"vesicle_import",text="Import as Vesicles")
         row = layout.row()
+
+
+classes = ( 
+            NEUROPIL_OT_impser,
+            NEUROPIL_OT_include_contour,
+            NEUROPIL_OT_include_filtered_contour,
+            NEUROPIL_OT_remove_contour,
+            NEUROPIL_OT_remove_contour_all,
+            NEUROPIL_OT_import_all_contours,
+            NEUROPIL_OT_import_selected_contour,
+            NEUROPIL_PT_ContourVesicleImporter,
+            Contour_Ves_UL_draw_item,
+            Include_Ves_UL_draw_item,
+            ContourVesicleObjectProperty,
+            ContourNameProperty,
+            IncludeNameProperty,
+            ContourVesicleSceneProperty,
+          )
+
+def register():
+    for cls in classes:
+      bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in reversed(classes):
+      bpy.utils.unregister_class(cls)
 

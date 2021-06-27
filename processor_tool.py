@@ -33,8 +33,8 @@ import re
 import bpy
 # IMPORT SWIG MODULE(s)
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, \
-    FloatProperty, FloatVectorProperty, IntProperty, \
-    IntVectorProperty, PointerProperty, StringProperty
+                      FloatProperty, FloatVectorProperty, IntProperty, \
+                      IntVectorProperty, PointerProperty, StringProperty
 import mathutils
 
 from bpy_extras.io_utils import ImportHelper
@@ -47,17 +47,7 @@ import numpy as np
 import glob
 import neuropil_tools
 import cellblender
-import gamer
-
-# register and unregister are required for Blender Addons
-# We use per module class registration/unregistration
-
-
-def register():
-    bpy.utils.register_module(__name__)
-
-def unregister():
-    bpy.utils.unregister_module(__name__)
+# from blendgamer import pygamer as gamer
 
 
 #Define Operators
@@ -101,8 +91,8 @@ class NEUROPIL_OT_impser(bpy.types.Operator, ImportHelper):
     bl_options = {'UNDO'}            
 
     filename_ext = ".ser"
-    filter_glob = StringProperty(default="*.ser", options={'HIDDEN'})
-    filepath = StringProperty(subtype='FILE_PATH')
+    filter_glob: StringProperty(default="*.ser", options={'HIDDEN'})
+    filepath: StringProperty(subtype='FILE_PATH')
 
     def execute(self, context):  
         context.scene.test_tool.generate_contour_list(context,self.filepath)
@@ -174,7 +164,7 @@ class NEUROPIL_OT_tile_mesh(bpy.types.Operator):
     bl_description = "Interpolate and Generate Meshes from All Included Contours"    
     bl_options = {'REGISTER', 'UNDO'}
 
-    filepath = StringProperty(subtype='FILE_PATH')
+    filepath: StringProperty(subtype='FILE_PATH')
 
     def execute(self, context):
         context.scene.test_tool.generate_mesh_object(context)
@@ -346,7 +336,7 @@ class Trace_UL_draw_item(bpy.types.UIList):
                  active_propname, index, flt_flags):
        
         self.use_filter_sort_alpha = True
-        layout.label(item.name)
+        layout.label(text=item.name)
 
 
     def filter_items(self, context, data, propname):
@@ -366,15 +356,15 @@ class Include_UL_draw_item(bpy.types.UIList):
         scn = bpy.context.scene
         self.use_filter_sort_alpha = True    
         #if item.non_manifold == True:
-     #    layout.label(item.name, icon='ERROR')
+     #    layout.label(text=item.name, icon='ERROR')
         if item.multi_component == True:
-            layout.label(item.name, icon='NLA')
+            layout.label(text=item.name, icon='SEQ_SEQUENCER')
         elif item.genus_issue == True:
-            layout.label(item.name, icon = "MESH_TORUS")
+            layout.label(text=item.name, icon = "MESH_TORUS")
         elif item.generated == True:
-            layout.label(item.name, icon='MESH_ICOSPHERE')
+            layout.label(text=item.name, icon='MESH_ICOSPHERE')
         else:
-            layout.label(item.name)
+            layout.label(text=item.name)
 
 
     def filter_items(self, context, data, propname):
@@ -389,13 +379,13 @@ class Contact_Pattern_UL_draw_item(bpy.types.UIList):
                  active_propname, index):
        
         self.use_filter_sort_alpha = True
-        layout.label(item.name)
+        layout.label(text=item.name)
 
 
 
 class SCN_UL_obj_draw_item(bpy.types.UIList):
 
-    use_base_name_filter = BoolProperty(name = "Filter Object List by Base Names", default = False)
+    use_base_name_filter: BoolProperty(name = "Filter Object List by Base Names", default = False)
   
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index, flt_flags):
@@ -407,13 +397,13 @@ class SCN_UL_obj_draw_item(bpy.types.UIList):
         match_text += ']'
 
         if item.processor.multi_synaptic == True:
-            layout.label(item.name + match_text, icon = "MANIPUL")
+            layout.label(text=item.name + match_text, icon = "MANIPUL")
         elif item.processor.newton == True:
-            layout.label(item.name + match_text, icon='FILE_TICK')
+            layout.label(text=item.name + match_text, icon='FILE_TICK')
         elif item.processor.smoothed == True:
-            layout.label(item.name + match_text, icon='MOD_SMOOTH')
+            layout.label(text=item.name + match_text, icon='MOD_SMOOTH')
         else:
-            layout.label(item.name + match_text)
+            layout.label(text=item.name + match_text)
 
 
     def draw_filter(self, context, layout):
@@ -455,7 +445,7 @@ class SCN_UL_obj_draw_item(bpy.types.UIList):
 class SCN_TestTool(bpy.types.Panel):
     bl_label = "3DEM Processor Tool"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Neuropil Tools"
 
@@ -470,30 +460,30 @@ def pattern_change_callback(self,context):
 
 
 class ContourNameSceneProperty(bpy.types.PropertyGroup):
-    name = StringProperty(name= "Contour name", default ="")
+    name: StringProperty(name= "Contour name", default ="")
     
     def init_contour(self,context,name):
         self.name = name
 
 
 class ContactPatternObjectProperty(bpy.types.PropertyGroup):
-    name = StringProperty(name= "Contact Object Pattern", default ="")
-    base_name_1_pattern = StringProperty("Base Name 1 Pattern", default = "")
-    base_name_2_pattern = StringProperty("Base Name 2 Pattern", default = "")
-    contact_name_pattern = StringProperty("Contact Name Pattern", default = "")
-    base_name_1_regex = StringProperty("Base Name 1 Regex", default = "")
-    base_name_2_regex = StringProperty("Base Name 2 Regex", default = "")
-    contact_name_regex = StringProperty("Contact Name Regex", default = "")
+    name: StringProperty(name= "Contact Object Pattern", default ="")
+    base_name_1_pattern: StringProperty("Base Name 1 Pattern", default = "")
+    base_name_2_pattern: StringProperty("Base Name 2 Pattern", default = "")
+    contact_name_pattern: StringProperty("Contact Name Pattern", default = "")
+    base_name_1_regex: StringProperty("Base Name 1 Regex", default = "")
+    base_name_2_regex: StringProperty("Base Name 2 Regex", default = "")
+    contact_name_regex: StringProperty("Contact Name Regex", default = "")
 
 
 class ContactPatternSceneProperty(bpy.types.PropertyGroup):
-    name = StringProperty(name= "Contact Object Pattern", default ="")
-    base_name_1_pattern = StringProperty("Base Name 1 Pattern", default = "", update=pattern_change_callback)          
-    base_name_2_pattern = StringProperty("Base Name 2 Pattern", default = "", update=pattern_change_callback)          
-    contact_name_pattern = StringProperty("Contact Name Pattern", default = "", update=pattern_change_callback)          
-    base_name_1_regex = StringProperty("Base Name 1 Regex", default = "")
-    base_name_2_regex = StringProperty("Base Name 2 Regex", default = "")
-    contact_name_regex = StringProperty("Contact Name Regex", default = "")
+    name: StringProperty(name= "Contact Object Pattern", default ="")
+    base_name_1_pattern: StringProperty("Base Name 1 Pattern", default = "", update=pattern_change_callback)          
+    base_name_2_pattern: StringProperty("Base Name 2 Pattern", default = "", update=pattern_change_callback)          
+    contact_name_pattern: StringProperty("Contact Name Pattern", default = "", update=pattern_change_callback)          
+    base_name_1_regex: StringProperty("Base Name 1 Regex", default = "")
+    base_name_2_regex: StringProperty("Base Name 2 Regex", default = "")
+    contact_name_regex: StringProperty("Contact Name Regex", default = "")
 
 
     def pattern_change_callback(self,context):
@@ -514,7 +504,7 @@ class ContactPatternSceneProperty(bpy.types.PropertyGroup):
         self.contact_name_regex = c_regex
 
         # update (rebuild) match list for each object
-        for obj in bpy.context.scene.objects:
+        for obj in bpy.context.scene.collection.children[0].objects:
            obj.processor.update_contact_pattern_match_list(context, obj)
         return
 
@@ -537,12 +527,12 @@ class ContactPatternSceneProperty(bpy.types.PropertyGroup):
 
 
 class IncludeNameSceneProperty(bpy.types.PropertyGroup):
-    name = StringProperty(name= "Include name", default ="")
-    generated = BoolProperty(name = "Mesh Object Generated", default = False)
-    multi_component = BoolProperty(name = "Multiple Components in Mesh", default = False)
-    non_manifold = BoolProperty(name = "Non-manifold Mesh", default = False) 
-    genus_issue = BoolProperty(name = "True if Genus > 0", default = False)         
-    problem = BoolProperty(name = "Problem Tagging", default = False)
+    name: StringProperty(name= "Include name", default ="")
+    generated: BoolProperty(name = "Mesh Object Generated", default = False)
+    multi_component: BoolProperty(name = "Multiple Components in Mesh", default = False)
+    non_manifold: BoolProperty(name = "Non-manifold Mesh", default = False) 
+    genus_issue: BoolProperty(name = "True if Genus > 0", default = False)         
+    problem: BoolProperty(name = "Problem Tagging", default = False)
     
     def init_include(self,context,name):
         self.name = name
@@ -550,12 +540,12 @@ class IncludeNameSceneProperty(bpy.types.PropertyGroup):
 
 
 class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
-    n_components = IntProperty(name="Number of Components in Mesh", default=0)
-    smoothed = BoolProperty(name="Smoothed Object", default=False)
-    newton = BoolProperty(name = "New Object", default=False)
-    multi_synaptic = BoolProperty(name = "Multiple Synapses", default = False)
-    fix_all_fail = BoolProperty(name = "Failed to Fix Obj", default = False)
-    contact_pattern_match_list = CollectionProperty(type = ContactPatternObjectProperty, name = "Contact Pattern Match List")
+    n_components: IntProperty(name="Number of Components in Mesh", default=0)
+    smoothed: BoolProperty(name="Smoothed Object", default=False)
+    newton: BoolProperty(name = "New Object", default=False)
+    multi_synaptic: BoolProperty(name = "Multiple Synapses", default = False)
+    fix_all_fail: BoolProperty(name = "Failed to Fix Obj", default = False)
+    contact_pattern_match_list: CollectionProperty(type = ContactPatternObjectProperty, name = "Contact Pattern Match List")
 
 
     def update_contact_pattern_match_list(self, context, obj):
@@ -588,8 +578,8 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
         if context.active_object is not None:
           bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
-        obj.select = True
-        bpy.context.scene.objects.active = obj
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.reveal()
         bpy.ops.mesh.select_all(action='SELECT')
@@ -641,12 +631,20 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
         if not self.smoothed:
           """ Smooth using GAMer """
           print('Smoothing: %s' % (context.active_object.name))
-          gamer_mip = context.scene.gamer.mesh_improve_panel
-          gamer_mip.dense_rate = 2.5
-          gamer_mip.dense_iter = 1
-          gamer_mip.max_min_angle = 20.0
-          gamer_mip.smooth_iter = 10
-          gamer_mip.preserve_ridges = True
+
+#          gamer_mip = context.scene.gamer.mesh_improve_panel
+#          gamer_mip.dense_rate = 2.5
+#          gamer_mip.dense_iter = 1
+#          gamer_mip.max_min_angle = 20.0
+#          gamer_mip.smooth_iter = 10
+#          gamer_mip.preserve_ridges = True
+
+          gamer_smiprops = context.scene.gamer.surfmesh_improvement_properties
+          gamer_smiprops.dense_rate = 2.5
+          gamer_smiprops.dense_iter = 1
+          gamer_smiprops.smooth_iter = 10
+          gamer_smiprops.preserve_ridges = True
+
           bpy.ops.object.mode_set(mode='EDIT')
           bpy.ops.mesh.beautify_fill(angle_limit=1.57)
           bpy.ops.mesh.subdivide(number_cuts=2)
@@ -703,7 +701,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
         append_bin = os.path.join(bin_dir, 'insert_mdl_region.py')
 
         scn = bpy.context.scene
-        objs = scn.objects
+        objs = scn.collection.children[0].objects
 
         b_obj_name = b_obj.name
         print('Tagging Object: ' + b_obj_name)
@@ -741,8 +739,8 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
           # unselect all objects 
           bpy.ops.object.select_all(action='DESELECT')
           # now select and export the base object:
-          bpy.context.scene.objects.active = b_obj
-          b_obj.select = True
+          bpy.context.view_layer.objects.active = b_obj
+          b_obj.select_set(True)
 
           # Clear all existing regions from object
           print("Clearing all regions from object")
@@ -762,8 +760,8 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
           for c_obj_name in c_objs:
             bpy.ops.object.select_all(action='DESELECT')
             c_obj = scn.objects[c_obj_name]
-            bpy.context.scene.objects.active = c_obj
-            c_obj.select = True
+            bpy.context.view_layer.objects.active = c_obj
+            c_obj.select_set(True)
             c_obj_file_name = cwd + '/' + c_obj.name + ".obj"
             bpy.ops.export_scene.obj(filepath=c_obj_file_name, axis_forward='Y', axis_up="Z", use_selection=True, use_edges=False, use_normals=False, use_uvs=False, use_materials=False, use_blen_objects=False) 
 
@@ -774,7 +772,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
             shutil.copyfile(b_mdl_with_tags_file_name, b_mdl_file_name)
 
           bpy.ops.object.select_all(action='DESELECT')
-          b_obj.select = True
+          b_obj.select_set(True)
           b_mesh = b_obj.data
           bpy.ops.import_mdl_mesh.mdl('EXEC_DEFAULT', filepath=b_mdl_with_tags_file_name)
           bpy.data.meshes.remove(b_mesh)
@@ -785,24 +783,24 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
 
 
 class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
-    active_sp_index = IntProperty(name="Active Spine Object Index", default=0)
-    active_c_index = IntProperty(name="Active Contact Object Index", default=0)
-    contour_list = CollectionProperty(
+    active_sp_index: IntProperty(name="Active Spine Object Index", default=0)
+    active_c_index: IntProperty(name="Active Contact Object Index", default=0)
+    contour_list: CollectionProperty(
         type = ContourNameSceneProperty, name = "Contour List")
-    active_contour_index = IntProperty(name="Active Contour Index", default=0)
-    include_list = CollectionProperty(
+    active_contour_index: IntProperty(name="Active Contour Index", default=0)
+    include_list: CollectionProperty(
         type = IncludeNameSceneProperty, name = "Include List")
-    active_include_index = IntProperty(name="Active Include Index", default=0)
-    contact_pattern_list = CollectionProperty(type = ContactPatternSceneProperty, name = "Contact Pattern List")
-    active_contact_pattern_index = IntProperty(name="Active Contact Pattern Index", default=0)
-    new = BoolProperty(name = "Imported MDL Object", default = False)
-    filepath = StringProperty(name = "RECONSTRUCT Series Filepath", default= "")
-    min_section = StringProperty(name="Minimum Reconstruct Section File", default= "")
-    max_section = StringProperty(name="Maximum Reconstruct Section File", default= "")
-    section_thickness = StringProperty(name="Section Thickness", default= "0.05")
-    min_sample_interval = FloatProperty(name="Minimum Sample Interval", description='Minimum interpolation interval in microns', default=0.01, precision=4)
-    max_sample_interval = FloatProperty(name="Maximum Sample Interval", description='Maximum interpolation interval in microns', default=0.05, precision=4)
-    filt = StringProperty(name = "Filter for Object list", default = "d[0-9][0-9]sp[0-9][0-9]")
+    active_include_index: IntProperty(name="Active Include Index", default=0)
+    contact_pattern_list: CollectionProperty(type = ContactPatternSceneProperty, name = "Contact Pattern List")
+    active_contact_pattern_index: IntProperty(name="Active Contact Pattern Index", default=0)
+    new: BoolProperty(name = "Imported MDL Object", default = False)
+    filepath: StringProperty(name = "RECONSTRUCT Series Filepath", default= "")
+    min_section: StringProperty(name="Minimum Reconstruct Section File", default= "")
+    max_section: StringProperty(name="Maximum Reconstruct Section File", default= "")
+    section_thickness: StringProperty(name="Section Thickness", default= "0.05")
+    min_sample_interval: FloatProperty(name="Minimum Sample Interval", description='Minimum interpolation interval in microns', default=0.01, precision=4)
+    max_sample_interval: FloatProperty(name="Maximum Sample Interval", description='Maximum interpolation interval in microns', default=0.05, precision=4)
+    filt: StringProperty(name = "Filter for Object list", default = "d[0-9][0-9]sp[0-9][0-9]")
 
 
     '''
@@ -817,7 +815,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         bn1_recomp = re.compile(bn1_regex)
         bn2_recomp = re.compile(bn2_regex)
         
-        for obj in bpy.context.scene.objects:
+        for obj in bpy.context.scene.collection.children[0].objects:
           if bn1_recomp.fullmatch(obj.name) or bn2_recomp.fullmatch(obj.name):
             obj.processor.name_match=True
           else:
@@ -956,15 +954,15 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
 
             #for item in self.include_list:
-            #objs = bpy.context.scene.objects
+            #objs = bpy.context.scene.collection.children[0].objects
             #for obj in objs:
             if bpy.data.objects.get(name) is not None:
                 bpy.ops.object.select_all(action='DESELECT')
-                obj = bpy.context.scene.objects[self.include_list[self.active_include_index].name]
-                obj.select = True
-                context.scene.objects.active = obj
+                obj = bpy.context.scene.collection.children[0].objects[self.include_list[self.active_include_index].name]
+                obj.select_set(True)
+                context.view_layer.objects.active = obj
                 m = obj.data
-                context.scene.objects.unlink(obj)
+                context.scene.collection.children[0].objects.unlink(obj)
                 bpy.data.objects.remove(obj)
                 bpy.data.meshes.remove(m)
                 if os.path.exists(out_file + '/'+ name + '_tiles.rawc'):
@@ -1039,8 +1037,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 obj = bpy.data.objects.get(contour_name)
                 if obj != None:
                     self.include_list[str(contour_name)].generated = True
-                    obj.select = True
-                    context.scene.objects.active = obj
+                    obj.select_set(True)
+                    context.view_layer.objects.active = obj
                     obj.processor.update_contact_pattern_match_list(context, obj)
                 if item.multi_component == True:
                     print("Multiple Components: %s" % (str(self.include_list[contour_name])))
@@ -1082,8 +1080,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             obj = bpy.data.objects.get(contour_name)
             if obj != None:
                 self.include_list[str(contour_name)].generated = True
-                obj.select = True
-                context.scene.objects.active = obj
+                obj.select_set(True)
+                context.view_layer.objects.active = obj
                 obj.processor.update_contact_pattern_match_list(context, obj)
 
         if self.include_list[contour_name].multi_component == True:
@@ -1111,16 +1109,16 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         #    contour_name = str(i.name)
         #    bpy.ops.object.select_all(action='DESELECT')
         #    #obj = scn.objects.get(str(i.name))
-        #    obj= bpy.context.scene.objects[contour_name] 
-        #    obj.select = True
+        #    obj= bpy.context.scene.collection.children[0].objects[contour_name] 
+        #    obj.select_set(True)
 
         if mode == "single":
             contour = self.include_list[self.active_include_index]
             contour_name  = contour.name
             bpy.ops.object.select_all(action='DESELECT')
             obj = scn.objects[contour_name]
-            obj.select = True
-            bpy.context.scene.objects.active = obj 
+            obj.select_set(True)
+            bpy.context.view_layer.objects.active = obj 
             bpy.ops.object.mode_set(mode = 'OBJECT')
             bpy.ops.mcell.meshalyzer()
             mesh_props = bpy.context.scene.mcell.meshalyzer
@@ -1139,7 +1137,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 print('\nFixing Single Flawed Mesh: %s\n' % (contour_name))
                 name = obj.name
                 m = obj.data
-                context.scene.objects.unlink(obj)
+                context.scene.collection.children[0].objects.unlink(obj)
                 bpy.data.objects.remove(obj)
                 bpy.data.meshes.remove(m)  
 
@@ -1156,8 +1154,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 self.include_list[name].generated = True
                 bpy.ops.object.select_all(action='DESELECT')
                 obj = scn.objects[contour_name]
-                obj.select = True
-                bpy.context.scene.objects.active = obj 
+                obj.select_set(True)
+                bpy.context.view_layer.objects.active = obj 
                 bpy.ops.object.mode_set(mode = 'OBJECT')
                 bpy.ops.mcell.meshalyzer()
                 mesh_props = bpy.context.scene.mcell.meshalyzer
@@ -1177,11 +1175,11 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                       
         else: 
             for obj in scn.objects:
-                #obj= bpy.context.scene.objects[contour_name] 
+                #obj= bpy.context.scene.collection.children[0].objects[contour_name] 
                 #print(obj.name)
                 bpy.ops.object.select_all(action='DESELECT')
-                obj.select = True
-                bpy.context.scene.objects.active = obj 
+                obj.select_set(True)
+                bpy.context.view_layer.objects.active = obj 
                 bpy.ops.object.mode_set(mode = 'OBJECT')
                 bpy.ops.mcell.meshalyzer()
                 mesh_props = bpy.context.scene.mcell.meshalyzer
@@ -1195,7 +1193,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 if ((mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals') and mesh_props.components == 1): 
                     print('\nFound Flawed Mesh: %s\n' % (obj.name))
                     m = obj.data
-                    context.scene.objects.unlink(obj)
+                    context.scene.collection.children[0].objects.unlink(obj)
                     bpy.data.objects.remove(obj)
                     bpy.data.meshes.remove(m)  
 
@@ -1212,8 +1210,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     self.include_list[name].generated = True
                     bpy.ops.object.select_all(action='DESELECT')
                     obj = scn.objects[name]
-                    obj.select = True
-                    bpy.context.scene.objects.active = obj 
+                    obj.select_set(True)
+                    bpy.context.view_layer.objects.active = obj 
                     bpy.ops.object.mode_set(mode = 'OBJECT')
                     bpy.ops.mcell.meshalyzer()
                     mesh_props = bpy.context.scene.mcell.meshalyzer
@@ -1285,7 +1283,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         self.active_contact_pattern_index = len(self.contact_pattern_list)-1
 
       # update (rebuild) match list for each object
-      for obj in bpy.context.scene.objects:
+      for obj in bpy.context.scene.collection.children[0].objects:
          obj.processor.update_contact_pattern_match_list(context, obj)
       return
 
@@ -1312,7 +1310,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         append_bin = os.path.join(bin_dir, 'insert_mdl_region.py')
 
         scn = bpy.context.scene
-        objs = scn.objects
+        objs = scn.collection.children[0].objects
 
         print('Tag Objects Mode: ' + mode)
         
@@ -1388,7 +1386,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         row.label(text='Import Reconstruct Series:', icon='MOD_ARRAY')
         row = layout.row(align=True)
         row.prop(self, "filepath", text='')
-        row.operator('processor_tool.impser', icon='FILESEL', text='')  
+        row.operator('processor_tool.impser', icon='FILEBROWSER', text='')  
         #row.operator("processor_tool.spine_namestruct", text = "Set Spine Name")
         row = layout.row()
         row.label(text = 'section thickness: ' + self.section_thickness) 
@@ -1409,7 +1407,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                           rows=5)
         col = row.column(align=True)
         col.operator('processor_tool.include_contour', icon='FORWARD', text='') 
-        col.operator('processor_tool.include_filter_contour', icon='EXPORT', text='') 
+        col.operator('processor_tool.include_filter_contour', icon='ANIM', text='') 
         col.operator('processor_tool.remove_contour_all', icon='X', text='') 
 
         col = row.column()
@@ -1418,10 +1416,10 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                           self, "active_include_index",
                           rows=5)
         col = row.column(align=True)
-        col.operator('processor_tool.remove_contour', icon='ZOOMOUT', text='')
+        col.operator('processor_tool.remove_contour', icon='REMOVE', text='')
         col.operator('processor_tool.generate_mesh_object_single', icon='MESH_ICOSPHERE', text='')
-        col.operator('processor_tool.generate_mesh_object', icon='POSE_DATA', text='')
-        col.label('', icon='BLANK1')
+        col.operator('processor_tool.generate_mesh_object', icon='ARMATURE_DATA', text='')
+        col.label(text='', icon='BLANK1')
         col.operator('processor_tool.fix_mesh', icon='MODIFIER', text='')
         col.operator('processor_tool.remove_components', icon='SEQ_SEQUENCER', text='')
 
@@ -1429,7 +1427,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
 
         box1 = layout.box()
         row = box1.row()
-        row.label(text="Contact Object Pattern List:", icon='HAND')
+        row.label(text="Contact Object Pattern List:", icon='OVERLAY')
         row = box1.row()
         col = row.column()
         row.template_list("Contact_Pattern_UL_draw_item","contact_patterns",
@@ -1437,8 +1435,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                           self, "active_contact_pattern_index",
                           rows=4) 
         col = row.column(align=True)
-        col.operator('processor_tool.add_contact_pattern', icon='ZOOMIN', text='')
-        col.operator('processor_tool.remove_contact_pattern', icon='ZOOMOUT', text='')
+        col.operator('processor_tool.add_contact_pattern', icon='ADD', text='')
+        col.operator('processor_tool.remove_contact_pattern', icon='REMOVE', text='')
 
         if self.contact_pattern_list:
           contact_pattern = self.contact_pattern_list[self.active_contact_pattern_index]
@@ -1450,18 +1448,62 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         row = layout.row()
         col = row.column()
         row.template_list("SCN_UL_obj_draw_item","sp_objects_in_scene",
-                          bpy.context.scene, "objects",
+                          bpy.context.scene.collection.children[0], "objects",
                           self, "active_sp_index",
                           rows=4) 
         col = row.column(align=True)
         col.operator('processor_tool.smooth', icon='MOD_SMOOTH', text='')
-        col.operator('processor_tool.smooth_all', icon='MOD_WAVE', text='')
-        col.label('', icon='BLANK1')
-        col.operator('processor_tool.tag_contact_single', icon='STYLUS_PRESSURE', text='')
+        col.operator('processor_tool.smooth_all', icon='MOD_OCEAN', text='')
+        col.label(text='', icon='BLANK1')
+        col.operator('processor_tool.tag_contact_single', icon='PIVOT_MEDIAN', text='')
         col.operator('processor_tool.tag_contacts', icon='POSE_HLT', text='')
 
         row = layout.row()
         row.label(text= "Merge central object with associated objects: ")
         row = layout.row()
         row.operator("processor_tool.merge_objs", text="Merge Objects")
+
+
+classes = ( 
+            NEUROPIL_OT_impser,
+            NEUROPIL_OT_include_contour,
+            NEUROPIL_OT_include_filter_contour,
+            NEUROPIL_OT_remove_contour,
+            NEUROPIL_OT_remove_contour_all,
+            NEUROPIL_OT_remove_comp,
+            NEUROPIL_OT_tile_mesh,
+            NEUROPIL_OT_tile_one_mesh,
+            NEUROPIL_OT_fix_mesh,
+            NEUROPIL_OT_select_obj,
+            NEUROPIL_OT_add_contact_pattern,
+            NEUROPIL_OT_remove_contact_pattern,
+            NEUROPIL_OT_smooth,
+            NEUROPIL_OT_smooth_all,
+            NEUROPIL_OT_tag_contact_single,
+            NEUROPIL_OT_tag_contacts,
+            NEUROPIL_OT_merge_objs,
+            GAMER_OT_coarse_dense,
+            GAMER_OT_coarse_flat,
+            GAMER_OT_smooth,
+            GAMER_OT_normal_smooth,
+            Trace_UL_draw_item,
+            Include_UL_draw_item,
+            Contact_Pattern_UL_draw_item,
+            ContourNameSceneProperty,
+            ContactPatternObjectProperty,
+            ContactPatternSceneProperty,
+            IncludeNameSceneProperty,
+            ProcessorToolObjectProperty,
+            ProcessorToolSceneProperty,
+            SCN_UL_obj_draw_item,
+            SCN_TestTool,
+          )
+
+def register():
+    for cls in classes:
+      bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in reversed(classes):
+      bpy.utils.unregister_class(cls)
 

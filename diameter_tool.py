@@ -30,8 +30,8 @@ import os
 import bpy
 # IMPORT SWIG MODULE(s)
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, \
-    FloatProperty, FloatVectorProperty, IntProperty, \
-    IntVectorProperty, PointerProperty, StringProperty
+                      FloatProperty, FloatVectorProperty, IntProperty, \
+                      IntVectorProperty, PointerProperty, StringProperty
 import mathutils
 
 # python imports
@@ -41,19 +41,8 @@ import numpy as np
 import neuropil_tools
 import cellblender
 
-# register and unregister are required for Blender Addons
-# We use per module class registration/unregistration
-
-
-def register():
-    bpy.utils.register_module(__name__)
-
-
-def unregister():
-    bpy.utils.unregister_module(__name__)
 
 # Get spine neck of interest
-
 
 class NEUROPIL_OT_select_spn(bpy.types.Operator):
     bl_idname = "diameter_tool.select_spn"
@@ -87,7 +76,7 @@ class DIAMETER_UL_psd_draw_item(bpy.types.UIList):
                   active_propname, index):
         self.filter_name = "*spn*"
         active_obj = context.active_object
-        layout.label(item.name)
+        layout.label(text=item.name)
 
 # Draw panel
 
@@ -95,7 +84,7 @@ class DIAMETER_UL_psd_draw_item(bpy.types.UIList):
 class DIAMETER_PT_DiameterTool(bpy.types.Panel):
     bl_label = "Calculate diameter"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -106,8 +95,8 @@ class DIAMETER_PT_DiameterTool(bpy.types.Panel):
 
 
 class DiameterToolNeckProperty(bpy.types.PropertyGroup):
-    name = StringProperty(name="Spine Neck", default="")
-    diameter_neck = FloatProperty(name="Diameter of Neck", default=0.0)
+    name: StringProperty(name="Spine Neck", default="")
+    diameter_neck: FloatProperty(name="Diameter of Neck", default=0.0)
 
     def init_spn(self, context, name):
         obj_name = context.active_object.name
@@ -177,13 +166,13 @@ class DiameterToolNeckProperty(bpy.types.PropertyGroup):
 
 # Object property
 class DiameterToolObjectProperty(bpy.types.PropertyGroup):
-    spn_list = CollectionProperty(
+    spn_list: CollectionProperty(
         type=DiameterToolNeckProperty, name="Spine List")
-    active_spn_region_index = IntProperty(name="Active SPN Index", default=0)
-    n_components = IntProperty(name="Number of Components in Mesh", default=0)
-    #head_name = StringProperty(name="Spine Head Name", default="")
-    diameter_neck = FloatProperty(name="Diameter of Neck",default=0.0)
-    #diameter_head = FloatProperty(name="Diameter of Head",default=0.0)
+    active_spn_region_index: IntProperty(name="Active SPN Index", default=0)
+    n_components: IntProperty(name="Number of Components in Mesh", default=0)
+    #head_name: StringProperty(name="Spine Head Name", default="")
+    diameter_neck: FloatProperty(name="Diameter of Neck",default=0.0)
+    #diameter_head: FloatProperty(name="Diameter of Head",default=0.0)
 
     # def init_psd(self,context,name):
         #obj_name = context.active_object.name
@@ -309,3 +298,22 @@ class DiameterToolObjectProperty(bpy.types.PropertyGroup):
     # def get_active_psd(self,context):
         #active_obj = context.active_object
         #reg_list = active_obj.mcell.regions.region_list
+
+
+classes = ( 
+            NEUROPIL_OT_select_spn,
+            NEUROPIL_OT_calculate_diameter,
+            DIAMETER_UL_psd_draw_item,
+            DIAMETER_PT_DiameterTool,
+            DiameterToolNeckProperty,
+            DiameterToolObjectProperty,
+          )
+
+def register():
+    for cls in classes:
+      bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in reversed(classes):
+      bpy.utils.unregister_class(cls)
+

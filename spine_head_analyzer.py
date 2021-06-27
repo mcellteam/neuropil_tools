@@ -43,15 +43,6 @@ import numpy as np
 import neuropil_tools
 import cellblender
 
-# register and unregister are required for Blender Addons
-# We use per module class registration/unregistration
-def register():
-    bpy.utils.register_module(__name__)
-
-
-def unregister():
-    bpy.utils.unregister_module(__name__)
-
 
 # Spine Head Analyzer Operators:
 
@@ -63,7 +54,7 @@ class NEUROPIL_OT_spine_namestruct(bpy.types.Operator):
     bl_region_type = "WINDOW"
     bl_options = {'UNDO'} 
 
-    spine_namestruct_name = StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
+    spine_namestruct_name: StringProperty(name = "Name: ", description = "Assign Spine Name", default = "")
   
     def invoke(self, context, event):
         wm = context.window_manager
@@ -82,7 +73,7 @@ class NEUROPIL_OT_psd_namestruct(bpy.types.Operator):
     bl_region_type = "WINDOW"
     bl_options = {'UNDO'} 
 
-    PSD_namestruct_name = StringProperty(name = "Name: ", description = "Assign PSD Name", default = "")
+    PSD_namestruct_name: StringProperty(name = "Name: ", description = "Assign PSD Name", default = "")
   
     def invoke(self, context, event):
         wm = context.window_manager
@@ -101,7 +92,7 @@ class NEUROPIL_OT_psd_namestruct(bpy.types.Operator):
 #    bl_options = {'UNDO'} 
 
     #global inter_namestruct_name
-    #inter_namestruct_name = StringProperty(name = "Name: ", description = "Assign Intermediate Region Name", default = "")
+    #inter_namestruct_name: StringProperty(name = "Name: ", description = "Assign Intermediate Region Name", default = "")
   
     #def invoke(self, context, event):
     #    wm = context.window_manager
@@ -120,7 +111,7 @@ class NEUROPIL_OT_psd_namestruct(bpy.types.Operator):
 #    bl_options = {'UNDO'} 
 
     ##global outer_namestruct_name
-#    outer_namestruct_name = StringProperty(name = "Name: ", description = "Assign Outer Region Name", default = "")
+#    outer_namestruct_name: StringProperty(name = "Name: ", description = "Assign Outer Region Name", default = "")
   
 #    def invoke(self, context, event):
 #        wm = context.window_manager
@@ -139,7 +130,7 @@ class NEUROPIL_OT_inner_namestruct(bpy.types.Operator):
     bl_options = {'UNDO'} 
     
     #global inner_namestruct_name
-#    inner_namestruct_name = StringProperty(name = "Name: ", description = "Assign Inner Region Name", default = "")
+#    inner_namestruct_name: StringProperty(name = "Name: ", description = "Assign Inner Region Name", default = "")
   
     def invoke(self, context, event):
         wm = context.window_manager
@@ -250,29 +241,29 @@ class NEUROPIL_OT_recompute_volumes(bpy.types.Operator):
         dends = bpy.context.scene.test_tool.spine_namestruct_name.replace('#', '[0-9]')
         dend_filter = dends
         #dend_filter = 'd[0-9]{2}$'
-        dend_objs = [obj.name for obj in context.scene.objects if re.match(dend_filter,obj.name) != None]
+        dend_objs = [obj.name for obj in context.scene.collection.children[0].objects if re.match(dend_filter,obj.name) != None]
         
         dend_objs.sort()
         orig_obj = context.active_object
-        orig_obj.select = False
-        orig_obj.hide = False
-        context.scene.objects.active = None
-        context.scene.update()
+        orig_obj.select_set(False)
+        orig_obj.hide_viewport = False
+        bpy.context.view_layer.objects.active = None
+        bpy.context.view_layer.update()
         for dend in dend_objs:
-            obj = context.scene.objects[dend]
-            obj.hide = False
-            obj.select = True
-            context.scene.objects.active = obj  
-            context.scene.update()
+            obj = context.scene.collection.children[0].objects[dend]
+            obj.hide_viewport = False
+            obj.select_set(True)
+            bpy.context.view_layer.objects.active = obj  
+            bpy.context.view_layer.update()
             obj.spine_head_ana.recompute_volumes(context,report_file)
-            obj.select = False
-            obj.hide = True
-            context.scene.objects.active = None
-            context.scene.update()
+            obj.select_set(False)
+            obj.hide_viewport = True
+            bpy.context.view_layer.objects.active = None
+            bpy.context.view_layer.update()
          
-        orig_obj.hide = False
-        orig_obj.select = True
-        context.scene.objects.active = orig_obj
+        orig_obj.hide_viewport = False
+        orig_obj.select_set(True)
+        bpy.context.view_layer.objects.active = orig_obj
 
 #        context.object.spine_head_ana.recompute_volumes(context,context.active_object)
         report_file.close()
@@ -300,9 +291,9 @@ class NEUROPIL_OT_output(bpy.types.Operator):
             dend_outFile.write('# sy pre_post head_vol spine_vol neck_vol computed_area region_area dia_head_max dia_head_min dia_neck_max dia_neck_min\n')
             dends = bpy.context.scene.test_tool.spine_namestruct_name.replace('#', '[0-9]')
             dend_filter = dends
-            dend_objs = [obj for obj in context.scene.objects if re.match(dend_filter,obj.name) != None]   
+            dend_objs = [obj for obj in context.scene.collection.children[0].objects if re.match(dend_filter,obj.name) != None]   
             #dend_filter = 'd[0-9][0-9]*sp[0-9]'
-            #dend_objs = [obj for obj in context.scene.objects]
+            #dend_objs = [obj for obj in context.scene.collection.children[0].objects]
             #print(dend_objs)
             for obj in dend_objs:
                 #dend_outFile.write('%s \n' % obj.name)
@@ -315,7 +306,7 @@ class NEUROPIL_OT_output(bpy.types.Operator):
             dend_outFile.write('# sy pre_post head_vol spine_vol neck_vol computed_area region_area\n')
             dends = bpy.context.scene.test_tool.spine_namestruct_name.replace('#', '[0-9]')
             dend_filter = dends
-            dend_objs = [obj for obj in context.scene.objects if re.match(dend_filter,obj.name) != None]
+            dend_objs = [obj for obj in context.scene.collection.children[0].objects if re.match(dend_filter,obj.name) != None]
             #print(dend_objs)
             for obj in dend_objs:
                 #dend_outFile.write('%s \n' % obj.name)
@@ -327,7 +318,7 @@ class NEUROPIL_OT_output(bpy.types.Operator):
         #axon_outFile.write('# sy pre_post spine_vol head_vol neck_vol spine_area head_area neck_area psd_az_area psd_az_loc_x psd_az_loc_y psd_az_loc_z neck_base_loc_x neck_base_loc_y neck_base_loc_z mito h_hooked h_concave h_flatface h_bulbous h_skinny n_short n_long n_stubby n_thin n_tapered n_branched n_twotiered glia_spicule glia_ensheathed glia_adjacent glia_distant exclude\n')
 
         #axon_filter = 'a[0-9]{2}$'
-        #axon_objs = [obj for obj in context.scene.objects if re.match(axon_filter,obj.name) != None]
+        #axon_objs = [obj for obj in context.scene.collection.children[0].objects if re.match(axon_filter,obj.name) != None]
         #for obj in axon_objs:
         #    obj.spine_head_ana.output(context,axon_outFile)
 
@@ -341,7 +332,7 @@ class NEUROPIL_OT_output(bpy.types.Operator):
 
 class NEUROPIL_UL_check_psd(bpy.types.UIList):
 
-    use_contact_filter = BoolProperty(name = "Filter Region List by Contact Names", default = True)
+    use_contact_filter: BoolProperty(name = "Filter Region List by Contact Names", default = True)
 
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
@@ -417,7 +408,7 @@ class NEUROPIL_UL_contact_patterns(bpy.types.UIList):
 class NEUROPIL_PT_SpineHeadAnalyzer(bpy.types.Panel):
     bl_label = "Morphometric Analysis Tool"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Neuropil Tools"
 
@@ -427,15 +418,15 @@ class NEUROPIL_PT_SpineHeadAnalyzer(bpy.types.Panel):
 
 
 class SpineHeadAnalyzerSceneProperty(bpy.types.PropertyGroup):
-    varicosity_label = StringProperty("Varicosity Label", default = 'axb')
-    protrusion_label = StringProperty("Protrusion Label", default = 'sp')
-    head_label = StringProperty("Head Label", default = 'sph')
-    neck_label = StringProperty("Neck Label", default = 'spn')
+    varicosity_label: StringProperty("Varicosity Label", default = 'axb')
+    protrusion_label: StringProperty("Protrusion Label", default = 'sp')
+    head_label: StringProperty("Head Label", default = 'sph')
+    neck_label: StringProperty("Neck Label", default = 'spn')
 
     '''
-    inner_namestruct_name = StringProperty("Set Inner Region Name", default = "d##sph##")
-    inter_namestruct_name = StringProperty("Set Intermediate Region Name", default = "d##spn##")
-    outer_namestruct_name = StringProperty("Set Outer Region Name", default = "d##sp##")
+    inner_namestruct_name: StringProperty("Set Inner Region Name", default = "d##sph##")
+    inter_namestruct_name: StringProperty("Set Intermediate Region Name", default = "d##spn##")
+    outer_namestruct_name: StringProperty("Set Outer Region Name", default = "d##sp##")
 
     def spine_namestruct(self, context, spine_namestruct_name):
         self.spine_namestruct_name = spine_namestruct_name
@@ -457,40 +448,40 @@ class SpineHeadAnalyzerSceneProperty(bpy.types.PropertyGroup):
 # Properties of the PSDs:
 
 class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
-    name = StringProperty(name="Spine PSD or AZ Name", default="")
-    char_postsynaptic = BoolProperty(name="Pre or Postsynaptic",default=True)
-    head_name = StringProperty(name="Spine Head Name", default="")
-    spine_name = StringProperty(name="Spine Name", default="")
-    neck_name = StringProperty(name="Spine Neck Name", default="")
-    volume = FloatProperty(name="Volume of Spine Head",default=0.0)
-    volume_spine = FloatProperty(name="Volume of Spine",default=0.0)
-    volume_neck = FloatProperty(name="Volume of Spine Neck",default=0.0)
-    area_head = FloatProperty(name="Area of Spine Head",default=0.0)
-    area_spine = FloatProperty(name="Area of Spine",default=0.0)
-    area_neck = FloatProperty(name="Surface Area of Spine Neck",default=0.0)
-    area_neck_cross_section_abt = FloatProperty(name="Area of Spine Neck cross section based on avg of top and base cross section area",default=0.0)
-    area_neck_cross_section_lbt = FloatProperty(name="Area of Spine Neck cross section based on volume_neck/length_neck_lbt",default=0.0)
-    area_psd_az = FloatProperty(name="Area of PSD or AZ",default=0.0)
-    diameter_neck_max = FloatProperty(name="Diameter of Neck",default=0.0)
-    diameter_neck_min = FloatProperty(name="Diameter of Neck",default=0.0)
-    diameter_neck_lbt = FloatProperty(name="Diameter of Neck based on area_neck_cross_section_lbt",default=0.0)
-    length_neck = FloatProperty(name="Length of Neck based on volume_neck/area_neck_cross_section",default=0.0)
-    length_neck_lbt = FloatProperty(name="Length of Neck based on distance from base to top",default=0.0)
-    diameter_head_max = FloatProperty(name="Diameter of Head",default=0.0)
-    diameter_head_min = FloatProperty(name="Diameter of Head",default=0.0)
-    diameter_head_lbt = FloatProperty(name="Diameter of Head based on area_neck_cross_section_lbt",default=0.0)
-    length_head = FloatProperty(name="Length of Head based on volume_neck/area_neck_cross_section",default=0.0)
-    length_head_lbt = FloatProperty(name="Length of Head based on distance from base to top",default=0.0)
-    psd_az_location = FloatVectorProperty(name="Location of PSD or AZ",default=(0.0,0.0,0.0))
-    neck_top_location = FloatVectorProperty(name="Location of Top of Spine Neck",default=(0.0,0.0,0.0))
-    neck_base_location = FloatVectorProperty(name="Location of Base of Spine Neck",default=(0.0,0.0,0.0))
-    char_mito = BoolProperty(name="Mitochondrion in Bouton",default=False)
-    exclude = BoolProperty(name="Exclude this spine?", default=False)
+    name: StringProperty(name="Spine PSD or AZ Name", default="")
+    char_postsynaptic: BoolProperty(name="Pre or Postsynaptic",default=True)
+    head_name: StringProperty(name="Spine Head Name", default="")
+    spine_name: StringProperty(name="Spine Name", default="")
+    neck_name: StringProperty(name="Spine Neck Name", default="")
+    volume: FloatProperty(name="Volume of Spine Head",default=0.0)
+    volume_spine: FloatProperty(name="Volume of Spine",default=0.0)
+    volume_neck: FloatProperty(name="Volume of Spine Neck",default=0.0)
+    area_head: FloatProperty(name="Area of Spine Head",default=0.0)
+    area_spine: FloatProperty(name="Area of Spine",default=0.0)
+    area_neck: FloatProperty(name="Surface Area of Spine Neck",default=0.0)
+    area_neck_cross_section_abt: FloatProperty(name="Area of Spine Neck cross section based on avg of top and base cross section area",default=0.0)
+    area_neck_cross_section_lbt: FloatProperty(name="Area of Spine Neck cross section based on volume_neck/length_neck_lbt",default=0.0)
+    area_psd_az: FloatProperty(name="Area of PSD or AZ",default=0.0)
+    diameter_neck_max: FloatProperty(name="Diameter of Neck",default=0.0)
+    diameter_neck_min: FloatProperty(name="Diameter of Neck",default=0.0)
+    diameter_neck_lbt: FloatProperty(name="Diameter of Neck based on area_neck_cross_section_lbt",default=0.0)
+    length_neck: FloatProperty(name="Length of Neck based on volume_neck/area_neck_cross_section",default=0.0)
+    length_neck_lbt: FloatProperty(name="Length of Neck based on distance from base to top",default=0.0)
+    diameter_head_max: FloatProperty(name="Diameter of Head",default=0.0)
+    diameter_head_min: FloatProperty(name="Diameter of Head",default=0.0)
+    diameter_head_lbt: FloatProperty(name="Diameter of Head based on area_neck_cross_section_lbt",default=0.0)
+    length_head: FloatProperty(name="Length of Head based on volume_neck/area_neck_cross_section",default=0.0)
+    length_head_lbt: FloatProperty(name="Length of Head based on distance from base to top",default=0.0)
+    psd_az_location: FloatVectorProperty(name="Location of PSD or AZ",default=(0.0,0.0,0.0))
+    neck_top_location: FloatVectorProperty(name="Location of Top of Spine Neck",default=(0.0,0.0,0.0))
+    neck_base_location: FloatVectorProperty(name="Location of Base of Spine Neck",default=(0.0,0.0,0.0))
+    char_mito: BoolProperty(name="Mitochondrion in Bouton",default=False)
+    exclude: BoolProperty(name="Exclude this spine?", default=False)
     contact_type_enum = [
         ('PLAIN', 'Plain (surface only)', ''),
         ('PROTRUSION', 'Protrusion (head, neck)', ''),
         ('VARICOSITY', 'Varicosity (in-line swelling)', '')]
-    contact_type = EnumProperty(
+    contact_type: EnumProperty(
         items=contact_type_enum, name="Contact Type",
         description="Type of Contact")
 
@@ -499,7 +490,7 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
                           ('Partial','Partial',''),
                           ('Full','Full','')
                         ]
-    ensheathment = EnumProperty(items = ensheathment_enum, name="Glial Ensheathment", description='Degree of Glial Ensheathment')
+    ensheathment: EnumProperty(items = ensheathment_enum, name="Glial Ensheathment", description='Degree of Glial Ensheathment')
     #inner_namestruct_name = bpy.context.scene.volume_analyzer.inner_namestruct_name
     #inter_namestruct_name = bpy.context.scene.volume_analyzer.inter_namestruct_name
     #outer_namestruct_name = bpy.context.scene.volume_analyzer.outer_namestruct_name
@@ -834,14 +825,14 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
       bpy.ops.object.mode_set(mode='OBJECT')
       
       #deselect original object
-      orig_obj.select = False
+      orig_obj.select_set(False)
       #define and name duplicated object
       dup_obj = bpy.context.selected_objects[0]
       dup_obj.name = reg_name + '_tmp_boundary'
       dup_obj.data.name = dup_obj.name
       #make dup_obj active
       scn = bpy.context.scene
-      scn.objects.active = dup_obj
+      bpy.context.view_layer.objects.active = dup_obj
       
       #extract non-manifold boundary of dup_obj
       bpy.ops.object.mode_set(mode='EDIT')
@@ -904,14 +895,14 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
       area = abs(self.area_3D_polygon(pverts, nvec))
       
       # We're done so now delete boundary object and mesh  
-      dup_obj.select = False
-      scn.objects.unlink(dup_obj)
+      dup_obj.select_set(False)
+      bpy.context.scene.collection.children[0].objects.unlink(dup_obj)
       bpy.data.objects.remove(dup_obj)
       bpy.data.meshes.remove(mesh)
       
       #reselect original object
-      scn.objects.active = orig_obj
-      orig_obj.select = True
+      bpy.context.view_layer.objects.active = orig_obj
+      orig_obj.select_set(True)
       
       return(list(bnd_centroid), area)
       
@@ -948,14 +939,14 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
       bpy.ops.object.mode_set(mode='OBJECT')
       
       #deselect original object
-      orig_obj.select = False
+      orig_obj.select_set(False)
       #define and name duplicated object
       dup_obj = bpy.context.selected_objects[0]
       dup_obj.name = tmp_obj_name
       dup_obj.data.name = dup_obj.name
       #make dup_obj active
       scn = bpy.context.scene
-      scn.objects.active = dup_obj
+      bpy.context.view_layer.objects.active = dup_obj
 
       # Compute centroid of object
       mesh = dup_obj.data
@@ -1007,14 +998,14 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
       bnd_centroid = list(bnd_centroid)
 
       # We're done so now delete boundary object and mesh  
-      dup_obj.select = False
-      scn.objects.unlink(dup_obj)
+      dup_obj.select_set(False)
+      bpy.context.scene.collection.children[0].objects.unlink(dup_obj)
       bpy.data.objects.remove(dup_obj)
       bpy.data.meshes.remove(mesh)
       
       #reselect original object
-      scn.objects.active = orig_obj
-      orig_obj.select = True
+      bpy.context.view_layer.objects.active = orig_obj
+      orig_obj.select_set(True)
       
       return(bnd_centroid, nvec)
 
@@ -1260,13 +1251,13 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 
        # DEFINE OBJECT 1 (original) AND 2 (hull to be) and SELECT O2
         #deselect original object
-        orig_obj.select = False
+        orig_obj.select_set(False)
         #define and name hull object
         hull = context.selected_objects[0]
         hull.name = orig_obj.name + '_tmp'
         #make hull active
         scn = context.scene
-        scn.objects.active = hull
+        bpy.context.view_layer.objects.active = hull
 
         # Compute location of top of neck:
         if mode == 'head':
@@ -1333,9 +1324,9 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             #The Boolean modifier does not work correctly with disjoint pieces
             #So we need to detect and handle this special case by
             #isolating the piece of dendrite containing the PSD we're working with
-            hull.select = False
-            orig_obj.select = True
-            scn.objects.active = orig_obj
+            hull.select_set(False)
+            orig_obj.select_set(True)
+            bpy.context.view_layer.objects.active = orig_obj
 
             # Count total vertices and number of vertices contiguous with PSD
             self.select_psd(context)
@@ -1354,16 +1345,16 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 
                 #deselect original object
                 bpy.ops.object.mode_set(mode='OBJECT')
-                orig_obj.select = False
+                orig_obj.select_set(False)
                 #define and name piece object
                 orig_piece = context.selected_objects[0]
                 orig_piece.name = orig_obj.name + '_piece_tmp'
-                orig_piece.select = False
+                orig_piece.select_set(False)
 
             #make hull active again
             bpy.ops.object.mode_set(mode='OBJECT')
-            hull.select = True
-            scn.objects.active = hull
+            hull.select_set(True)
+            bpy.context.view_layer.objects.active = hull
 
         # Enlarge convex hull by 1 nm to make Boolean Intersection more robust
         #expand shape of shell by 0.001 nm
@@ -1396,12 +1387,12 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 
         #Delete dendrite piece if we made one
         if (orig_piece != None):
-            hull.select = False
-            orig_piece.select = True
-            scn.objects.active = orig_piece
+            hull.select_set(False)
+            orig_piece.select_set(True)
+            bpy.context.view_layer.objects.active = orig_piece
             bpy.ops.object.delete()
-            hull.select = True
-            scn.objects.active = hull
+            hull.select_set(True)
+            bpy.context.view_layer.objects.active = hull
 
         # Make sure Boolean result contains one component
         #   Method 1:
@@ -1565,35 +1556,35 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
             bpy.ops.transform.shrink_fatten(value=offset)
             bpy.ops.object.mode_set(mode='OBJECT')
             #rename the shell
-            shell_obj = scn.objects.get(shell_name)
+            shell_obj = bpy.context.scene.collection.children[0].objects.get(shell_name)
             if shell_obj != None:
-                hull.select = False
-                shell_obj.hide = False
-                shell_obj.select = True
-                scn.objects.active = shell_obj
+                hull.select_set(False)
+                shell_obj.hide_viewport = False
+                shell_obj.select_set(True)
+                bpy.context.view_layer.objects.active = shell_obj
                 bpy.ops.object.delete()
-                hull.select = True
-                scn.objects.active = hull
+                hull.select_set(True)
+                bpy.context.view_layer.objects.active = hull
             hull.name = shell_name
-            hull.select = False
-            hull.hide = True
+            hull.select_set(False)
+            hull.hide_viewport = True
         elif make_jaccard_opt:
             shell_name = self.name.replace(name, inner_obj_name) + '_tmp_jaccard'
             #remove regions from shell
             hull.mcell.regions.remove_all_regions(context)
             #rename the shell
-            shell_obj = scn.objects.get(shell_name)
+            shell_obj = bpy.context.scene.collection.children[0].objects.get(shell_name)
             if shell_obj != None:
-                hull.select = False
-                shell_obj.hide = False
-                shell_obj.select = True
-                scn.objects.active = shell_obj
+                hull.select_set(False)
+                shell_obj.hide_viewport = False
+                shell_obj.select_set(True)
+                bpy.context.view_layer.objects.active = shell_obj
                 bpy.ops.object.delete()
-                hull.select = True
-                scn.objects.active = hull
+                hull.select_set(True)
+                bpy.context.view_layer.objects.active = hull
             hull.name = shell_name
-            hull.select = False
-            hull.hide = False
+            hull.select_set(False)
+            hull.hide_viewport = False
         else:
             bpy.ops.object.delete()
 
@@ -1601,10 +1592,10 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
         # Make neck
         if (self.volume != 0.0) and (self.volume_spine != 0.0):
             #reselect original dendrite
-            orig_obj.select = True
-            scn.objects.active = orig_obj
+            orig_obj.select_set(True)
+            bpy.context.view_layer.objects.active = orig_obj
             #unhide and unselect original mesh
-            context.scene.update()
+            bpy.context.view_layer.update()
             mesh = orig_obj.data
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.reveal()
@@ -1639,8 +1630,8 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 
         # RETURN TO ORIGINAL VIEW
         #reselect original dendrite
-        orig_obj.select = True
-        scn.objects.active = orig_obj	
+        orig_obj.select_set(True)
+        bpy.context.view_layer.objects.active = orig_obj	
         #re-enter editmode
         bpy.ops.object.mode_set(mode='EDIT')
         #unhide original
@@ -1650,17 +1641,17 @@ class SpineHeadAnalyzerPSDProperty(bpy.types.PropertyGroup):
 
 
 class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
-    psd_list = CollectionProperty(
+    psd_list: CollectionProperty(
         type=SpineHeadAnalyzerPSDProperty, name="Spine PSD List")
-    active_psd_region_index = IntProperty(name="Active PSD Index", default=0)
-    active_contact_pattern_index = IntProperty(name="Active Contact Pattern Index", default=0)
-    n_components = IntProperty(name="Number of Components in Mesh", default=0)
-    make_shell_head_opt = BoolProperty(name="Make Spine Head Shell?", default=True)
-    make_shell_spine_opt = BoolProperty(name="Make Spine Shell?", default=True)
-    set_head_mat_opt = BoolProperty(name="Set Spine Head Material?", default=False)
-    diameter_neck = FloatProperty(name="Diameter of Neck",default=0.0)
-    diameter_head = FloatProperty(name="Diameter of Head",default=0.0)
-    initialized = BoolProperty(name = "Full Object Region", default = False)
+    active_psd_region_index: IntProperty(name="Active PSD Index", default=0)
+    active_contact_pattern_index: IntProperty(name="Active Contact Pattern Index", default=0)
+    n_components: IntProperty(name="Number of Components in Mesh", default=0)
+    make_shell_head_opt: BoolProperty(name="Make Spine Head Shell?", default=True)
+    make_shell_spine_opt: BoolProperty(name="Make Spine Shell?", default=True)
+    set_head_mat_opt: BoolProperty(name="Set Spine Head Material?", default=False)
+    diameter_neck: FloatProperty(name="Diameter of Neck",default=0.0)
+    diameter_head: FloatProperty(name="Diameter of Head",default=0.0)
+    initialized: BoolProperty(name = "Full Object Region", default = False)
 
 
     def get_active_psd(self,context):
@@ -1805,7 +1796,7 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
 
     def remove_mock_psd(self,context):
         bpy.ops.object.mode_set(mode='OBJECT')
-        obj = bpy.context.scene.objects.active
+        obj = bpy.context.view_layer.objects.active
         #obj = context.active_object
         bpy.ops.object.mode_set(mode='EDIT')
         reg_list = obj.mcell.regions.region_list
@@ -2136,3 +2127,34 @@ class SpineHeadAnalyzerObjectProperty(bpy.types.PropertyGroup):
 
 
          
+
+classes = ( 
+            NEUROPIL_OT_spine_namestruct,
+            NEUROPIL_OT_psd_namestruct,
+            NEUROPIL_OT_inner_namestruct,
+            NEUROPIL_OT_select_psd,
+            NEUROPIL_OT_reset_psd,
+            NEUROPIL_OT_generate_mock_psd,
+            NEUROPIL_OT_remove_mock_psd,
+            NEUROPIL_OT_compute_volume,
+            NEUROPIL_OT_compute_volume_spine,
+            NEUROPIL_OT_calculate_diameter,
+            NEUROPIL_OT_calculate_diameter_head,
+            NEUROPIL_OT_recompute_volumes,
+            NEUROPIL_OT_output,
+            NEUROPIL_UL_check_psd,
+            NEUROPIL_UL_contact_patterns,
+            NEUROPIL_PT_SpineHeadAnalyzer,
+            SpineHeadAnalyzerSceneProperty,
+            SpineHeadAnalyzerPSDProperty,
+            SpineHeadAnalyzerObjectProperty,
+          )
+
+def register():
+    for cls in classes:
+      bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in reversed(classes):
+      bpy.utils.unregister_class(cls)
+
