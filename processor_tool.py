@@ -47,7 +47,6 @@ import numpy as np
 import glob
 import neuropil_tools
 import cellblender
-# from blendgamer import pygamer as gamer
 
 
 #Define Operators
@@ -632,19 +631,21 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
           """ Smooth using GAMer """
           print('Smoothing: %s' % (context.active_object.name))
 
-#          gamer_mip = context.scene.gamer.mesh_improve_panel
-#          gamer_mip.dense_rate = 2.5
-#          gamer_mip.dense_iter = 1
-#          gamer_mip.max_min_angle = 20.0
-#          gamer_mip.smooth_iter = 10
-#          gamer_mip.preserve_ridges = True
-
-          gamer_smiprops = context.scene.gamer.surfmesh_improvement_properties
-          gamer_smiprops.dense_rate = 2.5
-          gamer_smiprops.dense_iter = 1
-          gamer_smiprops.smooth_iter = 10
-          gamer_smiprops.preserve_ridges = True
-
+          gamer_version = int(context.scene.gamer.gamer_version[0])
+          if gamer_version == 0:
+            gamer_mip = context.scene.gamer.mesh_improve_panel
+            gamer_mip.dense_rate = 2.5
+            gamer_mip.dense_iter = 1
+            gamer_mip.max_min_angle = 20.0
+            gamer_mip.smooth_iter = 10
+            gamer_mip.preserve_ridges = True
+          else:
+            gamer_smiprops = context.scene.gamer.surfmesh_improvement_properties
+            gamer_smiprops.dense_rate = 2.5
+            gamer_smiprops.dense_iter = 1
+            gamer_smiprops.smooth_iter = 10
+            gamer_smiprops.preserve_ridges = True
+  
           bpy.ops.object.mode_set(mode='EDIT')
           bpy.ops.mesh.beautify_fill(angle_limit=1.57)
           bpy.ops.mesh.subdivide(number_cuts=2)
