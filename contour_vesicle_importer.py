@@ -156,7 +156,7 @@ class NEUROPIL_PT_ContourVesicleImporter(bpy.types.Panel):
 
 
 #layout object lists
-class Contour_Ves_UL_draw_item(bpy.types.UIList):
+class NEUROPIL_UL_contour_ves_trace_draw_item(bpy.types.UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data,
                  active_propname, index):
@@ -167,7 +167,7 @@ class Contour_Ves_UL_draw_item(bpy.types.UIList):
         layout.label(text=item.name)
 
 
-class Include_Ves_UL_draw_item(bpy.types.UIList):
+class NEUROPIL_UL_contour_ves_include_draw_item(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
@@ -430,7 +430,7 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         row.label(text="Import Include List:", icon='SORTSIZE')
         row = layout.row()
         col = row.column()
-        col.template_list("Contour_Ves_UL_draw_item","contours_in_ser_file",
+        col.template_list("NEUROPIL_UL_contour_ves_trace_draw_item","contours_in_ser_file",
                           bpy.context.scene.contour_vesicle, "contour_list",
                           self, "active_contour_index",
                           rows=2)
@@ -440,7 +440,7 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         col.operator("contour_vesicle.remove_contour_all", icon='X', text='')
 
         col = row.column()
-        col.template_list("Include_Ves_UL_draw_item","included_in_ser_file",
+        col.template_list("NEUROPIL_UL_contour_ves_include_draw_item","included_in_ser_file",
                           bpy.context.scene.contour_vesicle, "include_list",
                           self, "active_include_index",
                           rows=2)
@@ -463,8 +463,8 @@ classes = (
             NEUROPIL_OT_import_all_contours,
             NEUROPIL_OT_import_selected_contour,
             NEUROPIL_PT_ContourVesicleImporter,
-            Contour_Ves_UL_draw_item,
-            Include_Ves_UL_draw_item,
+            NEUROPIL_UL_contour_ves_trace_draw_item,
+            NEUROPIL_UL_contour_ves_include_draw_item,
             ContourVesicleObjectProperty,
             ContourNameProperty,
             IncludeNameProperty,

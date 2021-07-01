@@ -73,11 +73,11 @@ def npt_register():
 
 
 def npt_unregister():
-    io_import_multiple_objs.register()
-    processor_tool.register()
-    contour_vesicle_importer.register()
-    spine_head_analyzer.register()
-    connectivity_tool.register()
+    connectivity_tool.unregister()
+    spine_head_analyzer.unregister()
+    contour_vesicle_importer.unregister()
+    processor_tool.unregister()
+    io_import_multiple_objs.unregister()
 
 
 # Enable the Addon

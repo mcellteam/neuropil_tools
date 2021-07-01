@@ -284,8 +284,8 @@ class NEUROPIL_OT_merge_objs(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class GAMER_OT_coarse_dense(bpy.types.Operator):
-    bl_idname = "gamer.coarse_dense"
+class NEUROPIL_OT_gamer_coarse_dense(bpy.types.Operator):
+    bl_idname = "npt_gamer.coarse_dense"
     bl_label = "Coarse Dense"
     bl_description = "Decimate selected dense areas of the mesh"
     bl_options = {'REGISTER', 'UNDO'}
@@ -295,8 +295,8 @@ class GAMER_OT_coarse_dense(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class GAMER_OT_coarse_flat(bpy.types.Operator):
-    bl_idname = "gamer.coarse_flat"
+class NEUROPIL_OT_gamer_coarse_flat(bpy.types.Operator):
+    bl_idname = "npt_gamer.coarse_flat"
     bl_label = "Coarse Flat"
     bl_description = "Decimate selected flat areas of the mesh"
     bl_options = {'REGISTER', 'UNDO'}
@@ -306,8 +306,8 @@ class GAMER_OT_coarse_flat(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class GAMER_OT_smooth(bpy.types.Operator):
-    bl_idname = "gamer.smooth"
+class NEUROPIL_OT_gamer_smooth(bpy.types.Operator):
+    bl_idname = "npt_gamer.smooth"
     bl_label = "Smooth"
     bl_description = "Smooth selected vertices of the mesh"
     bl_options = {'REGISTER', 'UNDO'}
@@ -317,8 +317,8 @@ class GAMER_OT_smooth(bpy.types.Operator):
         return {'FINISHED'}
 
  
-class GAMER_OT_normal_smooth(bpy.types.Operator):
-    bl_idname = "gamer.normal_smooth"
+class NEUROPIL_OT_gamer_normal_smooth(bpy.types.Operator):
+    bl_idname = "npt_gamer.normal_smooth"
     bl_label = "Normal Smooth"
     bl_description = "Smooth faces normals of selected faces of the mesh"
     bl_options = {'REGISTER', 'UNDO'}
@@ -329,7 +329,7 @@ class GAMER_OT_normal_smooth(bpy.types.Operator):
 
 
 #layout object lists
-class Trace_UL_draw_item(bpy.types.UIList):
+class NEUROPIL_UL_trace_draw_item(bpy.types.UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data,
                  active_propname, index, flt_flags):
@@ -348,7 +348,7 @@ class Trace_UL_draw_item(bpy.types.UIList):
 
 
 
-class Include_UL_draw_item(bpy.types.UIList):
+class NEUROPIL_UL_include_draw_item(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index, flt_flags):
@@ -372,7 +372,7 @@ class Include_UL_draw_item(bpy.types.UIList):
 
 
 
-class Contact_Pattern_UL_draw_item(bpy.types.UIList):
+class NEUROPIL_UL_contact_pattern_draw_item(bpy.types.UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data,
                  active_propname, index):
@@ -382,7 +382,7 @@ class Contact_Pattern_UL_draw_item(bpy.types.UIList):
 
 
 
-class SCN_UL_obj_draw_item(bpy.types.UIList):
+class NEUROPIL_UL_obj_draw_item(bpy.types.UIList):
 
     use_base_name_filter: BoolProperty(name = "Filter Object List by Base Names", default = False)
   
@@ -441,7 +441,7 @@ class SCN_UL_obj_draw_item(bpy.types.UIList):
       return flt_flags, flt_neworder
 
 
-class SCN_TestTool(bpy.types.Panel):
+class NEUROPIL_PT_processor_tool(bpy.types.Panel):
     bl_label = "3DEM Processor Tool"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -650,19 +650,19 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
           bpy.ops.mesh.beautify_fill(angle_limit=1.57)
           bpy.ops.mesh.subdivide(number_cuts=2)
           bpy.ops.object.mode_set(mode='OBJECT')
-          bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
-          bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
-          bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
-          bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
-          bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
-          bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
-          bpy.ops.gamer.smooth('INVOKE_DEFAULT')      
-          bpy.ops.gamer.coarse_dense('INVOKE_DEFAULT')
-          bpy.ops.gamer.smooth('INVOKE_DEFAULT')
-          bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
-          bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
-          bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
-          bpy.ops.gamer.normal_smooth('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')      
+          bpy.ops.npt_gamer.coarse_dense('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')      
+          bpy.ops.npt_gamer.coarse_dense('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')      
+          bpy.ops.npt_gamer.coarse_dense('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')      
+          bpy.ops.npt_gamer.coarse_dense('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.normal_smooth('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.normal_smooth('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.normal_smooth('INVOKE_DEFAULT')
+          bpy.ops.npt_gamer.normal_smooth('INVOKE_DEFAULT')
           self.smoothed = True
           obj = context.active_object
           obj.processor.update_contact_pattern_match_list(context, obj)
@@ -1402,7 +1402,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         row.label(text="Include List:", icon='MESH_ICOSPHERE')
         row = layout.row()
         col = row.column()
-        col.template_list("Trace_UL_draw_item","contours_in_ser_file",
+        col.template_list("NEUROPIL_UL_trace_draw_item","contours_in_ser_file",
                           self, "contour_list",
                           self, "active_contour_index",
                           rows=5)
@@ -1412,7 +1412,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         col.operator('processor_tool.remove_contour_all', icon='X', text='') 
 
         col = row.column()
-        col.template_list("Include_UL_draw_item","included_in_ser_file",
+        col.template_list("NEUROPIL_UL_include_draw_item","included_in_ser_file",
                           self, "include_list",
                           self, "active_include_index",
                           rows=5)
@@ -1431,7 +1431,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         row.label(text="Contact Object Pattern List:", icon='OVERLAY')
         row = box1.row()
         col = row.column()
-        row.template_list("Contact_Pattern_UL_draw_item","contact_patterns",
+        row.template_list("NEUROPIL_UL_contact_pattern_draw_item","contact_patterns",
                           self, "contact_pattern_list",
                           self, "active_contact_pattern_index",
                           rows=4) 
@@ -1448,7 +1448,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
         row.label(text="Object List:", icon='MESH_ICOSPHERE')
         row = layout.row()
         col = row.column()
-        row.template_list("SCN_UL_obj_draw_item","sp_objects_in_scene",
+        row.template_list("NEUROPIL_UL_obj_draw_item","sp_objects_in_scene",
                           bpy.context.scene.collection.children[0], "objects",
                           self, "active_sp_index",
                           rows=4) 
@@ -1483,21 +1483,21 @@ classes = (
             NEUROPIL_OT_tag_contact_single,
             NEUROPIL_OT_tag_contacts,
             NEUROPIL_OT_merge_objs,
-            GAMER_OT_coarse_dense,
-            GAMER_OT_coarse_flat,
-            GAMER_OT_smooth,
-            GAMER_OT_normal_smooth,
-            Trace_UL_draw_item,
-            Include_UL_draw_item,
-            Contact_Pattern_UL_draw_item,
+            NEUROPIL_OT_gamer_coarse_dense,
+            NEUROPIL_OT_gamer_coarse_flat,
+            NEUROPIL_OT_gamer_smooth,
+            NEUROPIL_OT_gamer_normal_smooth,
+            NEUROPIL_UL_trace_draw_item,
+            NEUROPIL_UL_include_draw_item,
+            NEUROPIL_UL_contact_pattern_draw_item,
             ContourNameSceneProperty,
             ContactPatternObjectProperty,
             ContactPatternSceneProperty,
             IncludeNameSceneProperty,
             ProcessorToolObjectProperty,
             ProcessorToolSceneProperty,
-            SCN_UL_obj_draw_item,
-            SCN_TestTool,
+            NEUROPIL_UL_obj_draw_item,
+            NEUROPIL_PT_processor_tool,
           )
 
 def register():
