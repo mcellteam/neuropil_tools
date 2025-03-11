@@ -51,6 +51,8 @@ import cellblender
 
 #Define Operators
 
+python_cmd = sys.executable
+
 contour_filter_pattern = ''
 
 def filter_items_by_pattern(self, context, data, propname):
@@ -650,6 +652,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
           gamer_version = context.scene.gamer.gamer_version[1]
           if gamer_version == '2':
             # We have found GAMer version 2
+            print('Using GAMer_v2')
             gamer_smiprops = context.scene.gamer.surfmesh_improvement_properties
             gamer_smiprops.dense_rate = 2.5
             gamer_smiprops.dense_iter = 1
@@ -657,6 +660,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
             gamer_smiprops.preserve_ridges = True
           else:
             # We have found GAMer version 1
+            print('Using GAMer_v1')
             gamer_mip = context.scene.gamer.mesh_improve_panel
             gamer_mip.dense_rate = 2.5
             gamer_mip.dense_iter = 1
@@ -665,9 +669,14 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
             gamer_mip.preserve_ridges = True
   
           bpy.ops.object.mode_set(mode='EDIT')
-          bpy.ops.mesh.beautify_fill(angle_limit=1.57)
-          bpy.ops.mesh.subdivide(number_cuts=2)
-          bpy.ops.object.mode_set(mode='OBJECT')
+          # Note: can create self-intersections:
+          #bpy.ops.mesh.beautify_fill(angle_limit=1.57)
+          #bpy.ops.mesh.subdivide(number_cuts=2)
+          #bpy.ops.mesh.subdivide(number_cuts=1)
+          if gamer_version == '2':
+            bpy.ops.object.mode_set(mode='EDIT')
+          else:
+            bpy.ops.object.mode_set(mode='OBJECT')
           bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')      
           bpy.ops.npt_gamer.coarse_dense('INVOKE_DEFAULT')
           bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')      
@@ -677,6 +686,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
           bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')      
           bpy.ops.npt_gamer.coarse_dense('INVOKE_DEFAULT')
           bpy.ops.npt_gamer.smooth('INVOKE_DEFAULT')
+          bpy.ops.object.mode_set(mode='OBJECT')
           bpy.ops.npt_gamer.normal_smooth('INVOKE_DEFAULT')
           bpy.ops.npt_gamer.normal_smooth('INVOKE_DEFAULT')
           bpy.ops.npt_gamer.normal_smooth('INVOKE_DEFAULT')
@@ -786,7 +796,7 @@ class ProcessorToolObjectProperty(bpy.types.PropertyGroup):
 
             tag_cmd = tag_bin + " %s %s > %s" % (b_obj_file_name, cwd + '/' + c_obj_name + ".obj", cwd + '/' + c_obj_name + "_regions.mdl")
             subprocess.check_output([tag_cmd],shell=True)
-            append_cmd = append_bin + " %s %s > %s" % (b_mdl_file_name, cwd + '/' + c_obj_name + "_regions.mdl", b_mdl_with_tags_file_name)
+            append_cmd = python_cmd + " " + append_bin + " %s %s > %s" % (b_mdl_file_name, cwd + '/' + c_obj_name + "_regions.mdl", b_mdl_with_tags_file_name)
             subprocess.check_output([append_cmd],shell=True)
             shutil.copyfile(b_mdl_with_tags_file_name, b_mdl_file_name)
 
@@ -1049,7 +1059,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 print('\nTiling Object: \n%s\n' % (tile_cmd))
                 subprocess.check_output([tile_cmd],shell=True)
             #make obj
-                rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
+                rawc2obj_cmd = python_cmd + " " + rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
                 subprocess.check_output([rawc2obj_cmd],shell=True)
             #import obj
                 bpy.ops.import_scene.obj(filepath=out_file + '/' + contour_name  + ".obj", axis_forward='Y', axis_up="Z")
@@ -1092,7 +1102,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             print('\nTiling Object: \n%s\n' % (tile_cmd))
             subprocess.check_output([tile_cmd],shell=True)
             #make obj
-            rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
+            rawc2obj_cmd = python_cmd + " " + rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
             subprocess.check_output([rawc2obj_cmd],shell=True)
             #import obj
             bpy.ops.import_scene.obj(filepath=out_file + '/' + contour_name  + ".obj", axis_forward='Y', axis_up="Z")
@@ -1165,7 +1175,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                 subprocess.check_output([fix_all_cmd], shell=True)
 
                 #make obj
-                rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ name + '_fix.rawc', out_file + '/'+  name + ".obj")
+                rawc2obj_cmd = python_cmd + " " + rawc2obj_bin + " %s > %s" % (out_file + '/'+ name + '_fix.rawc', out_file + '/'+  name + ".obj")
                 subprocess.check_output([rawc2obj_cmd],shell=True)
 
                 #import obj
@@ -1221,7 +1231,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
                     subprocess.check_output([fix_all_cmd], shell=True)
 
                     #make obj
-                    rawc2obj_cmd = rawc2obj_bin + " %s > %s" % (out_file + '/'+ name + '_fix.rawc', out_file + '/'+  name + ".obj")
+                    rawc2obj_cmd = python_cmd + " " + rawc2obj_bin + " %s > %s" % (out_file + '/'+ name + '_fix.rawc', out_file + '/'+  name + ".obj")
                     subprocess.check_output([rawc2obj_cmd],shell=True)
 
                     #import obj
