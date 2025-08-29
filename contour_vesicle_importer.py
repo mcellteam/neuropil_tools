@@ -25,6 +25,7 @@ This file contains the classes for Diameter Tool.
 # stuff to call Volrover individual executables
 import sys
 import subprocess
+import importlib
 import os
 import re
 #import numpy
@@ -42,11 +43,12 @@ from bpy_extras.io_utils import ImportHelper
 
 # python imports
 
-import re
 import numpy as np
 import glob
-import neuropil_tools
-import cellblender
+
+globals()['neuropil_tools'] = importlib.import_module(__package__)
+#import neuropil_tools
+from .. import cellblender
 
 
 #Define operators
@@ -407,7 +409,8 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
                   print("Importing as Contours: %s" % (recon2obj_cmd))
                 subprocess.check_output([recon2obj_cmd],shell=True)
             #import obj
-                bpy.ops.import_scene.obj(filepath=obj_file, axis_forward='Y', axis_up="Z")
+                #bpy.ops.import_scene.obj(filepath=obj_file, axis_forward='Y', axis_up="Z")
+                bpy.ops.wm.obj_import(filepath=obj_file, forward_axis='Y', up_axis="Z")
                 self.include_list[contour_name].imported = True
 
 

@@ -26,6 +26,7 @@ This file contains the classes for Diameter Tool.
 import sys
 import shutil
 import subprocess
+import importlib
 import os
 import re
 
@@ -42,11 +43,12 @@ from bpy_extras.io_utils import ImportHelper
 
 # python imports
 
-import re
 import numpy as np
 import glob
-import neuropil_tools
-import cellblender
+
+globals()['neuropil_tools'] = importlib.import_module(__package__)
+#import neuropil_tools
+from .. import cellblender
 
 
 #Define Operators

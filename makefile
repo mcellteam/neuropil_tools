@@ -3,7 +3,7 @@ INSTALL_DIR = ~/my_blender_addons_link
 
 SHELL = /bin/sh
 
-SOURCES = ./neuropil_tools/__init__.py ./neuropil_tools/processor_tool.py ./neuropil_tools/contour_vesicle_importer.py ./neuropil_tools/spine_head_analyzer.py ./neuropil_tools/spine_head_analyzer_c.py ./neuropil_tools/spine_head_analyzer_sy.py ./neuropil_tools/connectivity_tool.py ./neuropil_tools/diameter_tool.py ./neuropil_tools/insert_mdl_region.py ./neuropil_tools/io_import_multiple_objs.py ./neuropil_tools/io_import_ser.py
+SOURCES = ./neuropil_tools/__init__.py ./neuropil_tools/blender_manifest.toml ./neuropil_tools/processor_tool.py ./neuropil_tools/contour_vesicle_importer.py ./neuropil_tools/spine_head_analyzer.py ./neuropil_tools/spine_head_analyzer_c.py ./neuropil_tools/spine_head_analyzer_sy.py ./neuropil_tools/connectivity_tool.py ./neuropil_tools/diameter_tool.py ./neuropil_tools/insert_mdl_region.py ./neuropil_tools/io_import_multiple_objs.py ./neuropil_tools/io_import_ser.py
 
 ZIPFILES = $(SOURCES)
 
