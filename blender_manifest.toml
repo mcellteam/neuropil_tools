@@ -1,0 +1,17 @@
+schema_version = "1.0.0"
+id = "neuropil_tools"
+version = "4.1.0"
+name = "NeuropilTools"
+tagline = "Suite of Tools for Generating Computation Quality Meshes From 3DEM Datasets"
+maintainer = "Tom Bartol, Burak Kaynak"
+type = "add-on"
+"website" = "http://www.mcell.org"
+tags = ["Modeling", "Physics"]
+blender_version_min = "3.4.0"
+blender_version_max = "4.5.0"
+license = ["SPDX:GPL-2.0-or-later"]
+platforms = ["windows-x64", "linux-x64", "macos-x64", "macos-arm64"]
+
+[permissions]
+files = "Import and Export 3DEM contour files from disk"
+
