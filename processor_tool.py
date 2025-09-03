@@ -1107,7 +1107,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             rawc2obj_cmd = python_cmd + " " + rawc2obj_bin + " %s > %s" % (out_file + '/'+ contour_name + '_tiles.rawc', out_file + '/'+  contour_name + ".obj")
             subprocess.check_output([rawc2obj_cmd],shell=True)
             #import obj
-            bpy.ops.import_scene.obj(filepath=out_file + '/' + contour_name  + ".obj", axis_forward='Y', axis_up="Z")
+            bpy.ops.wm.obj_import(filepath=out_file + '/' + contour_name  + ".obj", forward_axis='Y', up_axis="Z")
             obj = bpy.data.objects.get(contour_name)
             if obj != None:
                 self.include_list[str(contour_name)].generated = True
@@ -1154,7 +1154,7 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             bpy.ops.mcell.meshalyzer()
             mesh_props = bpy.context.scene.mcell.meshalyzer
             name = obj.name
-            if mesh_props.components >1:           
+            if mesh_props.disjoint_components > 1:           
                 print('\nFound Multi-component Mesh: %s\n' % (obj.name))
                 self.include_list[name].multi_component = True
             #if mesh_props.manifold == False:
@@ -1164,7 +1164,8 @@ class ProcessorToolSceneProperty(bpy.types.PropertyGroup):
             #if mesh_props.manifold == False:
             #    print('\nFound Non-manifold Mesh: %s\n' % (obj.name))
             #    self.include_list[name].non_manifold = True
-            if ((mesh_props.manifold == False) or (mesh_props.watertight == False) or (mesh_props.normal_status == 'Inconsistent Normals') and mesh_props.components == 1): 
+            manifold = (mesh_props.nonmanifold_vertices == 0) and (mesh_props.nonmanifold_vertices == 0) 
+            if ((manifold == False) or (mesh_props.watertight_components == 0) or ('Inconsistent Normals' in mesh_props.normal_status) and mesh_props.disjoint_components == 1): 
                 print('\nFixing Single Flawed Mesh: %s\n' % (contour_name))
                 name = obj.name
                 m = obj.data
