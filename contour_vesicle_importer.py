@@ -292,7 +292,7 @@ class ContourVesicleSceneProperty(bpy.types.PropertyGroup):
         contour_re = re.compile('Contour\ name=\"(.*?)\"')
 
         all_names = []
-        for i in range(int(self.min_section), int(self.max_section)):
+        for i in range(int(self.min_section), int(self.max_section)+1):
             trace_file_name = '%s%s%d' % (ser_prefix, os.path.extsep, i)
             print('Reading contour names in trace file: %s' % (trace_file_name))
 #            all_names += contour_re.findall(open(ser_prefix[:-3] + str(i)).read())
