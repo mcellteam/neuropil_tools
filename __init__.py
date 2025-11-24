@@ -19,9 +19,10 @@
 
 import os
 import sys
-from bpy_extras.io_utils import ImportHelper
+import importlib
 
 
+'''
 # Needed for Blender Addon System
 bl_info = {
     "name": "Neuropil Tools",
@@ -35,8 +36,19 @@ bl_info = {
     "tracker_url": "https://github.com/mcellteam/neuropil_tools/issues",
     "category": "Cell Modeling"
 }
+'''
+
+NPT_MODULE_NAMES = ( 'io_import_multiple_objs',
+                 'processor_tool',
+                 'contour_vesicle_importer',
+                 'spine_head_analyzer',
+                 'connectivity_tool',
+               )
+
+_npt_modules = []
 
 
+'''
 # To support reregistration of Addon properly, try to access a package var,
 # and if it's there, reload everything
 # and if not, then do initial import
@@ -58,7 +70,7 @@ else:
         contour_vesicle_importer, \
 	spine_head_analyzer, \
         connectivity_tool
-
+'''
 
 
 import bpy
@@ -83,8 +95,25 @@ def npt_unregister():
 # Enable the Addon
 def register():
 
+    print ( "Registering Neuropil Tools  with Blender version = " + str(bpy.app.version) )
+    ##bpy.utils.register_module(__name__, verbose=False)
+
+    _npt_modules.clear()
+
+    for module_name in NPT_MODULE_NAMES:
+      if module_name in locals():
+        module = importlib.reload(locals()[module_name])
+      else:
+        module = importlib.import_module(f'.{module_name}', package=__package__)
+      _npt_modules.append(module)
+
+
+    for module in _npt_modules:
+      module.register()
+
+
     # register all of the components of the Addon
-    npt_register()
+    #npt_register()
 
     # Extend the metadata of bpy.types.Object with our Processor Tool metadata
     bpy.types.Object.processor = bpy.props.PointerProperty(
@@ -121,10 +150,14 @@ def register():
 # Disable the Addon
 def unregister():
     # unregister all of the components of the Addon
-    npt_unregister()
+    #npt_unregister()
+
+    for module in _npt_modules[::-1]:
+      module.unregister()
 
     #bpy.types.INFO_MT_file_import.remove(menu_func_import)
     print("Neuropil Tools unregistered")
+
 
 #def register():
 #    bpy.utils.register_class(ImportMultipleObjs)

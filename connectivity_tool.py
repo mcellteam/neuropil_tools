@@ -30,9 +30,12 @@ import mathutils
 
 # python imports
 
+import importlib
 import re
-import neuropil_tools
-import cellblender
+
+globals()['neuropil_tools'] = importlib.import_module(__package__)
+#import neuropil_tools
+from .. import cellblender
 
 
 # Spine Head Analyzer Operators:

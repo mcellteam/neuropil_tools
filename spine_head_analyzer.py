@@ -23,6 +23,7 @@ This file contains the classes for Spine Head Analyzer.
 """
 # stuff to call Volrover individual executables
 import subprocess
+import importlib
 import os
 import time
 import difflib
@@ -40,8 +41,10 @@ import mathutils
 
 import re
 import numpy as np
-import neuropil_tools
-import cellblender
+
+globals()['neuropil_tools'] = importlib.import_module(__package__)
+#import neuropil_tools
+from .. import cellblender
 
 
 # Spine Head Analyzer Operators:
